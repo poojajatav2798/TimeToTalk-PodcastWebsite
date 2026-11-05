@@ -1,0 +1,120 @@
+﻿
+@{
+    ViewData["Title"] = "Episodes";
+    int  currentPage = ViewBag.CurrentPage;
+    int  totalPages  = ViewBag.TotalPages;
+    var  allTopics   = ViewBag.AllTopics as List<string>;
+    string? activeTopic = ViewBag.Topic;
+}
+
+@* ── PAGE HEADER (wave background) ── *@
+<header class="site-header d-flex align-items-center">
+    <div class="container">
+        <h2>All Episodes</h2>
+        <p class="text-white">Browse every episode of Pod Talk</p>
+    </div>
+</header>
+
+<section class="section-padding">
+    <div class="container">
+
+        @* ── TOPIC FILTER BUTTONS ── *@
+        <div class="d-flex flex-wrap gap-2 mb-5">
+            <a href="/episodes"
+               class="btn @(activeTopic == null ? "custom-btn" : "btn-outline-secondary")">
+                All
+            </a>
+            @if (allTopics != null)
+            {
+                @foreach (var t in allTopics)
+                {
+                    <a href="/episodes?topic=@t"
+                       class="btn @(activeTopic == t ? "custom-btn" : "btn-outline-secondary")">
+                        @t
+                    </a>
+                }
+            }
+        </div>
+
+        @* ── EPISODES GRID ── *@
+        <div class="row g-4">
+            @foreach (var ep in Model)
+            {
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="custom-block custom-block-full">
+
+                        <div class="custom-block-image-wrap">
+                            <a href="/episodes/@ep.Id">
+                                <img src="@ep.ThumbnailUrl"
+                                     class="custom-block-image img-fluid"
+                                     alt="@ep.Title" />
+                            </a>
+                        </div>
+
+                        <div class="custom-block-info">
+                            <div class="custom-block-top d-flex justify-content-between mb-2">
+                                <small>Ep. @ep.EpisodeNumber</small>
+                                <span class="badge">@ep.Topic</span>
+                            </div>
+                            <h6 class="mb-2">@ep.Title</h6>
+                            <p>@ep.ShortDescription</p>
+
+                            <div class="profile-block d-flex align-items-center">
+                                <img src="@ep.HostImageUrl"
+                                     class="profile-block-image"
+                                     alt="@ep.HostName" />
+                                <p>
+                                    <strong>@ep.HostName</strong>
+                                    <small class="d-block">
+                                        @ep.PublishDate.ToString("MMM d, yyyy")
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center p-3">
+                            <a href="/episodes/@ep.Id" class="custom-block-icon" title="Play">
+                                <i class="bi bi-play-fill"></i>
+                            </a>
+                            <small class="ms-auto text-muted">@ep.DurationMinutes min</small>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* ── PAGINATION ── *@
+        @if (totalPages > 1)
+        {
+            <div class="d-flex justify-content-center mt-5">
+                <ul class="pagination">
+
+                    @* Previous button *@
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" href="/episodes?page=@(currentPage - 1)">
+                            <i class="bi bi-arrow-left"></i>
+                        </a>
+                    </li>
+
+                    @* Page numbers *@
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link" href="/episodes?page=@i">@i</a>
+                        </li>
+                    }
+
+                    @* Next button *@
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="/episodes?page=@(currentPage + 1)">
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+        }
+
+    </div>
+</section>

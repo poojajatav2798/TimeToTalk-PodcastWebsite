@@ -1,0 +1,285 @@
+@using Kentico.Web.Mvc
+@using Kentico.PageBuilder.Web.Mvc
+@inject Kentico.Content.Web.Mvc.IWebPageDataContextRetriever WebPageDataContextRetriever
+
+@{
+    ViewData["Title"] = "Home";
+
+    var hosts = ViewBag.Hosts as List<Podcast.Web.Models.HostViewModel>;
+    var episodes = ViewBag.LatestEpisodes as List<Podcast.Web.Models.EpisodeViewModel>;
+    var trending = ViewBag.TrendingEpisodes as List<Podcast.Web.Models.EpisodeViewModel>;
+    var topics = ViewBag.Topics as List<Podcast.Web.Models.TopicViewModel>;
+}
+
+<!-- Kentico Page Builder Editable Area for Editors (Rendered when inside a Web Page channel context) -->
+@if (WebPageDataContextRetriever.TryRetrieve(out var pageContext))
+{
+    <div class="page-builder-area">
+        @await Html.Kentico().EditableAreaAsync("home_main_area")
+    </div>
+}
+
+<!-- Default Content Area -->
+<!-- 1. Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 col-12">
+                <div class="text-center mb-5 pb-2">
+                    <h1 class="text-white">Listen to Pod Talk</h1>
+                    <p class="text-white">Listen it everywhere. Explore your fav podcasts.</p>
+                    <a href="#section_2" class="btn custom-btn smoothscroll mt-3">Start listening</a>
+                </div>
+
+                <div class="owl-carousel owl-theme">
+                    @if (hosts != null && hosts.Any())
+                    {
+                        @foreach (var host in hosts)
+                        {
+                            <div class="owl-carousel-info-wrap item">
+                                <img src="@host.ImageUrl" class="owl-carousel-image img-fluid" alt="@host.Name">
+
+                                <div class="owl-carousel-info">
+                                    <h4 class="mb-2">
+                                        @host.Name
+                                        @if (host.IsVerified)
+                                        {
+                                            <img src="/images/verified.png" class="owl-carousel-verified-image img-fluid" alt="Verified">
+                                        }
+                                    </h4>
+
+                                    @if (host.Badges != null && host.Badges.Any())
+                                    {
+                                        @foreach (var badge in host.Badges)
+                                        {
+                                            <span class="badge">@badge</span>
+                                        }
+                                    }
+                                    else if (!string.IsNullOrEmpty(host.Category))
+                                    {
+                                        <span class="badge">@host.Category</span>
+                                    }
+                                </div>
+
+                                <div class="social-share">
+                                    <ul class="social-icon">
+                                        @if (!string.IsNullOrEmpty(host.TwitterUrl) && host.TwitterUrl != "#")
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@host.TwitterUrl" class="social-icon-link bi-twitter" target="_blank" rel="noopener"></a>
+                                            </li>
+                                        }
+                                        @if (!string.IsNullOrEmpty(host.FacebookUrl) && host.FacebookUrl != "#")
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@host.FacebookUrl" class="social-icon-link bi-facebook" target="_blank" rel="noopener"></a>
+                                            </li>
+                                        }
+                                        @if (!string.IsNullOrEmpty(host.InstagramUrl) && host.InstagramUrl != "#")
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@host.InstagramUrl" class="social-icon-link bi-instagram" target="_blank" rel="noopener"></a>
+                                            </li>
+                                        }
+                                        @if (!string.IsNullOrEmpty(host.LinkedInUrl) && host.LinkedInUrl != "#")
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@host.LinkedInUrl" class="social-icon-link bi-linkedin" target="_blank" rel="noopener"></a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        }
+
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 2. Latest Episodes Section -->
+<section class="latest-podcast-section section-padding pb-0" id="section_2">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 col-12">
+                <div class="section-title-wrap mb-5">
+                    <h4 class="section-title">Lastest episodes</h4>
+                </div>
+            </div>
+
+            @if (episodes != null && episodes.Any())
+            {
+                @foreach (var episode in episodes)
+                {
+                    <div class="col-lg-6 col-12 mb-4">
+                        <div class="custom-block d-flex">
+                            <div>
+                                <div class="custom-block-icon-wrap">
+                                    <div class="section-overlay"></div>
+                                    <a asp-controller="Detail" asp-action="Index" asp-route-slug="@episode.Slug" class="custom-block-image-wrap">
+                                        <img src="@episode.ThumbnailUrl" class="custom-block-image img-fluid" alt="@episode.Title">
+                                        <span class="custom-block-icon">
+                                            <i class="bi-play-fill"></i>
+                                        </span>
+                                    </a>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a asp-controller="Detail" asp-action="Index" asp-route-slug="@episode.Slug" class="btn custom-btn">
+                                        Subscribe
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="custom-block-info">
+                                <div class="custom-block-top d-flex mb-1">
+                                    <small class="me-4">
+                                        <i class="bi-clock-fill custom-icon"></i>
+                                        @episode.DurationMinutes Minutes
+                                    </small>
+                                    <small>Episode <span class="badge">@episode.EpisodeNumber</span></small>
+                                </div>
+
+                                <h5 class="mb-2">
+                                    <a asp-controller="Detail" asp-action="Index" asp-route-slug="@episode.Slug">
+                                        @episode.Title
+                                    </a>
+                                </h5>
+
+                                <div class="profile-block d-flex">
+                                    <img src="@episode.HostImageUrl" class="profile-block-image img-fluid" alt="@episode.HostName">
+                                    <p>
+                                        @episode.HostName
+                                        @if (episode.HostIsVerified)
+                                        {
+                                            <img src="/images/verified.png" class="verified-image img-fluid" alt="Verified">
+                                        }
+                                        <strong>@episode.HostTitle</strong>
+                                    </p>
+                                </div>
+
+                                <p class="mb-0">@episode.ShortDescription</p>
+
+                                <div class="custom-block-bottom d-flex justify-content-between mt-3">
+                                    <span class="bi-headphones me-1"><span>@episode.ListensCount</span></span>
+                                    <span class="bi-heart me-1"><span>@episode.LikesCount</span></span>
+                                    <span class="bi-chat me-1"><span>@episode.CommentsCount</span></span>
+                                    <span class="bi-download"><span>@episode.DownloadsCount</span></span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column ms-auto">
+                                <a href="#" class="badge ms-auto"><i class="bi-heart"></i></a>
+                                <a href="#" class="badge ms-auto"><i class="bi-bookmark"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            }
+
+        </div>
+    </div>
+</section>
+
+<!-- 3. Topics Section -->
+<section class="topics-section section-padding pb-0" id="section_3">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 col-12">
+                <div class="section-title-wrap mb-5">
+                    <h4 class="section-title">Topics</h4>
+                </div>
+            </div>
+            @if (topics != null && topics.Any())
+            {
+                @foreach (var topic in topics)
+                {
+                    <div class="col-lg-3 col-md-6 col-12 mb-4 mb-lg-0">
+                        <div class="custom-block custom-block-overlay">
+                            <a asp-controller="Listing" asp-action="Index" asp-route-topic="@topic.Slug" class="custom-block-image-wrap">
+                                <img src="@topic.ImageUrl" class="custom-block-image img-fluid" alt="@topic.Title">
+                            </a>
+
+                            <div class="custom-block-info custom-block-overlay-info">
+                                <h5 class="mb-1">
+                                    <a asp-controller="Listing" asp-action="Index" asp-route-topic="@topic.Slug">
+                                        @topic.Title
+                                    </a>
+                                </h5>
+                                <p class="badge mb-0">@topic.EpisodeCount Episodes</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            }
+
+        </div>
+    </div>
+</section>
+
+<!-- 4. Trending Section -->
+<section class="trending-podcast-section section-padding">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 col-12">
+                <div class="section-title-wrap mb-5">
+                    <h4 class="section-title">Trending episodes</h4>
+                </div>
+            </div>
+            @if (trending != null && trending.Any()){
+                  @foreach (var episode in trending)
+            {
+                <div class="col-lg-4 col-12 mb-4 mb-lg-0">
+                    <div class="custom-block custom-block-full">
+                        <div class="custom-block-image-wrap">
+                            <a asp-controller="Detail" asp-action="Index" asp-route-slug="@episode.Slug">
+                                <img src="@episode.ThumbnailUrl" class="custom-block-image img-fluid" alt="@episode.Title">
+                            </a>
+                        </div>
+
+                        <div class="custom-block-info">
+                            <h5 class="mb-2">
+                                <a asp-controller="Detail" asp-action="Index" asp-route-slug="@episode.Slug">
+                                    @episode.Title
+                                </a>
+                            </h5>
+
+                            <div class="profile-block d-flex">
+                                <img src="@episode.HostImageUrl" class="profile-block-image img-fluid" alt="@episode.HostName">
+                                <p>
+                                    @episode.HostName
+                                    @if (episode.HostIsVerified)
+                                    {
+                                        <img src="/images/verified.png" class="verified-image img-fluid" alt="Verified">
+                                    }
+                                    <strong>@episode.HostTitle</strong>
+                                </p>
+                            </div>
+
+                            <p class="mb-0">@episode.ShortDescription</p>
+
+                            <div class="custom-block-bottom d-flex justify-content-between mt-3">
+                                <span class="bi-headphones me-1"><span>@episode.ListensCount</span></span>
+                                <span class="bi-heart me-1"><span>@episode.LikesCount</span></span>
+                                <span class="bi-chat me-1"><span>@episode.CommentsCount</span></span>
+                            </div>
+                        </div>
+
+                        <div class="social-share d-flex flex-column ms-auto">
+                            <a href="#" class="badge ms-auto"><i class="bi-heart"></i></a>
+                            <a href="#" class="badge ms-auto"><i class="bi-bookmark"></i></a>
+                        </div>
+                    </div>
+                </div>
+            }
+   
+            }
+            
+        </div>
+    </div>
+</section>

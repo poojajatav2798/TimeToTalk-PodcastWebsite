@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Pod Talk</title>
+
+    <!-- Google Fonts (Montserrat + Sono) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Sono:wght@400;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- CSS files — order matters! -->
+    <link rel="stylesheet" href="~/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/owl.carousel.min.css" />
+    <link rel="stylesheet" href="~/css/owl.theme.default.min.css" />
+    <link rel="stylesheet" href="~/css/templatemo-pod-talk.css" />
+
+    <page-builder-styles />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- Header partial -->
+    <partial name="~/Features/Shared/Layout/_Header.cshtml" />
+
+    <!-- Every page's content renders here -->
+    <main>
+        @RenderBody()
+    </main>
+
+    <!-- Footer partial -->
+    <partial name="~/Features/Shared/Layout/_Footer.cshtml" />
+
+    <!-- JS files — jQuery FIRST, then Bootstrap, then Owl, then custom -->
+    <script src="~/js/jquery.min.js"></script>
+    <script src="~/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/owl.carousel.min.js"></script>
+    <script src="~/js/custom.js"></script>
+
+    <page-builder-scripts />
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

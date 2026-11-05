@@ -1,0 +1,78 @@
+@model Podcast.Web.Components.Widgets.HeroSlider.HeroSliderWidgetViewModel
+
+<section class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 col-12">
+                <div class="text-center mb-5 pb-2">
+                    <h1 class="text-white">@Model.Properties.Headline</h1>
+                    <p class="text-white">@Model.Properties.Subheadline</p>
+                    <a href="@Model.Properties.ButtonUrl" class="btn custom-btn smoothscroll mt-3">@Model.Properties.ButtonText</a>
+                </div>
+
+                <div class="owl-carousel owl-theme">
+                    @if (Model.Hosts != null && Model.Hosts.Any())
+                    {
+                        @foreach (var host in Model.Hosts)
+                        {
+                            <div class="owl-carousel-info-wrap item">
+                                <img src="@host.ImageUrl" class="owl-carousel-image img-fluid" alt="@host.Name">
+
+                                <div class="owl-carousel-info">
+                                    <h4 class="mb-2">
+                                        @host.Name
+                                        @if (host.IsVerified)
+                                        {
+                                            <img src="/images/verified.png" class="owl-carousel-verified-image img-fluid" alt="Verified">
+                                        }
+                                    </h4>
+
+                                    @if (host.Badges != null && host.Badges.Any())
+                                    {
+                                        @foreach (var badge in host.Badges)
+                                        {
+                                            <span class="badge">@badge</span>
+                                        }
+                                    }
+                                    else if (!string.IsNullOrEmpty(host.Category))
+                                    {
+                                        <span class="badge">@host.Category</span>
+                                    }
+                                </div>
+
+                                <div class="social-share">
+                                    <ul class="social-icon">
+                                        @if (!string.IsNullOrEmpty(host.TwitterUrl) && host.TwitterUrl != "#")
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@host.TwitterUrl" class="social-icon-link bi-twitter" target="_blank" rel="noopener"></a>
+                                            </li>
+                                        }
+                                        @if (!string.IsNullOrEmpty(host.FacebookUrl) && host.FacebookUrl != "#")
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@host.FacebookUrl" class="social-icon-link bi-facebook" target="_blank" rel="noopener"></a>
+                                            </li>
+                                        }
+                                        @if (!string.IsNullOrEmpty(host.InstagramUrl) && host.InstagramUrl != "#")
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@host.InstagramUrl" class="social-icon-link bi-instagram" target="_blank" rel="noopener"></a>
+                                            </li>
+                                        }
+                                        @if (!string.IsNullOrEmpty(host.LinkedInUrl) && host.LinkedInUrl != "#")
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@host.LinkedInUrl" class="social-icon-link bi-linkedin" target="_blank" rel="noopener"></a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

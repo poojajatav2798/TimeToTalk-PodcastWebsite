@@ -1,0 +1,107 @@
+@model Podcast.Web.Models.EpisodeViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var related = ViewBag.RelatedEpisodes as List<Podcast.Web.Models.EpisodeViewModel>;
+}
+
+<!-- PAGE HEADER -->
+<header class="site-header d-flex align-items-center">
+    <div class="container">
+        <h2>@Model.Title</h2>
+        <p class="text-white">Episode @Model.EpisodeNumber &bull; @Model.Topic</p>
+    </div>
+</header>
+
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+
+            <!-- MAIN EPISODE DETAIL -->
+            <div class="col-lg-8 col-12">
+                <div class="custom-block custom-block-full">
+                    <div class="custom-block-image-wrap mb-4">
+                        <img src="@Model.ThumbnailUrl" class="custom-block-image img-fluid rounded" alt="@Model.Title">
+                    </div>
+
+                    <div class="custom-block-info">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge">@Model.Topic</span>
+                            <small class="text-muted"><i class="bi-clock me-1"></i>@Model.DurationMinutes Minutes</small>
+                        </div>
+
+                        <h3 class="mb-3">@Model.Title</h3>
+                        
+                        <!-- AUDIO PLAYER -->
+                        <div class="audio-player-wrap bg-light p-3 rounded mb-4">
+                            <audio controls class="w-100">
+                                <source src="@Model.AudioUrl" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+
+                        <div class="episode-description mb-4">
+                            <h5>About this episode</h5>
+                            <p>@Model.Description</p>
+                        </div>
+
+                        <!-- HOST INFO -->
+                        <div class="profile-block d-flex align-items-center p-3 bg-light rounded mb-4">
+                            <img src="@Model.HostImageUrl" class="profile-block-image rounded-circle me-3" width="70" height="70" alt="@Model.HostName">
+                            <div>
+                                <h6 class="mb-0">
+                                    @Model.HostName
+                                    @if (Model.HostIsVerified)
+                                    {
+                                        <img src="/images/verified.png" class="verified-image img-fluid ms-1" alt="Verified">
+                                    }
+                                </h6>
+                                <small class="text-muted d-block">@Model.HostTitle</small>
+                                <small class="text-muted">Published on @Model.PublishDate.ToString("MMMM dd, yyyy")</small>
+                            </div>
+                        </div>
+
+                        <div class="custom-block-bottom d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                <span class="bi-headphones me-3"> @Model.ListensCount listens</span>
+                                <span class="bi-heart me-3"> @Model.LikesCount likes</span>
+                                <span class="bi-chat"> @Model.CommentsCount comments</span>
+                            </div>
+                            <div>
+                                <a href="@Model.AudioUrl" download class="btn custom-btn btn-sm">
+                                    <i class="bi-download me-1"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIDEBAR: RELATED EPISODES -->
+            <div class="col-lg-4 col-12 mt-4 mt-lg-0">
+                <div class="section-title-wrap mb-4">
+                    <h5 class="section-title">Related Episodes</h5>
+                </div>
+
+                @if (related != null && related.Any())
+                {
+                    @foreach (var item in related)
+                    {
+                        <div class="custom-block custom-block-full mb-3">
+                            <div class="d-flex">
+                                <img src="@item.ThumbnailUrl" class="img-fluid rounded me-3" style="width: 80px; height: 80px; object-fit: cover;" alt="@item.Title">
+                                <div>
+                                    <small class="badge mb-1">@item.Topic</small>
+                                    <h6 class="mb-1">
+                                        <a href="/episodes/@item.Slug">@item.Title</a>
+                                    </h6>
+                                    <small class="text-muted">Ep. @item.EpisodeNumber &bull; @item.DurationMinutes min</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+        </div>
+    </div>
+</section>

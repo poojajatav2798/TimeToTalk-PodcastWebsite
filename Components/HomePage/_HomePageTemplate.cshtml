@@ -1,0 +1,12 @@
+﻿@using Kentico.Web.Mvc
+@using Kentico.PageBuilder.Web.Mvc
+@model Kentico.PageBuilder.Web.Mvc.ComponentViewModel<Podcast.Web.Components.HomePage.HomePageTemplate>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Pod Talk - Home";
+}
+
+<div class="podtalk-home-template">
+    @await Html.Kentico().EditableAreaAsync("main")
+</div>
