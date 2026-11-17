@@ -1,13 +1,44 @@
-<footer class="site-footer">
+<footer class="site-footer" id="newsletter-section">
     <div class="container">
-        <div class="row g-4">
+
+        <!-- Attached Newsletter Section (Common on all pages) -->
+        <div class="row justify-content-center">
+            <div class="col-lg-11 col-12">
+                <div class="footer-newsletter-wrap">
+                    <div class="row align-items-center">
+                        <div class="col-lg-6 col-12 mb-4 mb-lg-0">
+                            <span class="badge bg-primary mb-2 text-uppercase px-3 py-2" style="font-size: 0.75rem; letter-spacing: 1px;">Stay Connected</span>
+                            <h3 class="text-white mb-2" style="font-weight: 700;">Subscribe to Pod Talk</h3>
+                            <p class="text-white-50 mb-0">Get the latest podcast episodes, host updates, and exclusive insights delivered directly to your inbox every week.</p>
+                        </div>
+                        <div class="col-lg-6 col-12">
+                            <div id="footerNewsletterMessage" class="mb-3"></div>
+
+                            <form id="footerNewsletterForm" method="post" action="/api/newsletter/submit" class="custom-form newsletter-form">
+                                <div class="input-group">
+                                    <input type="email" name="Email" class="form-control" placeholder="Enter your email address" required style="border-radius: 50px 0 0 50px; padding: 14px 22px; background: rgba(255,255,255,0.95); border: none;" />
+                                    <button type="submit" class="btn custom-btn" style="border-radius: 0 50px 50px 0; padding: 14px 28px; font-weight: 600;">
+                                        <i class="bi bi-send-fill me-2"></i>Subscribe
+                                    </button>
+                                </div>
+                            </form>
+                            <small class="text-white-50 mt-2 d-block"><i class="bi bi-shield-check me-1"></i>We respect your privacy. Unsubscribe at any time.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Links Grid -->
+        <div class="row g-4 pt-2">
 
             <!-- COL 1: Quick Links -->
             <div class="col-lg-3 col-md-6 col-12">
                 <h5 class="site-footer-title mb-3">Quick Links</h5>
                 <ul class="site-footer-links list-unstyled">
                     <li><a href="/" class="site-footer-link">Home</a></li>
-                    <li><a href="/episodes" class="site-footer-link">Episodes</a></li>
+                    <li><a href="/about" class="site-footer-link">About Us</a></li>
+                    <li><a href="/episodes" class="site-footer-link">All Episodes</a></li>
                     <li><a href="/topics" class="site-footer-link">Topics</a></li>
                     <li><a href="/contact" class="site-footer-link">Contact</a></li>
                 </ul>
@@ -59,17 +90,57 @@
 
         </div>
 
-        <hr class="mt-4" />
+        <hr class="mt-4" style="border-color: rgba(255,255,255,0.2);" />
 
         <!-- Bottom copyright row -->
         <div class="row">
             <div class="col-12 text-center">
                 <p class="site-footer-title mb-0">
-                    Copyright &copy; @DateTime.Now.Year Pod Talk.
-                    Design: <a href="https://templatemo.com" target="_blank" class="site-footer-link">TemplateMo</a>
+                    Copyright &copy; @DateTime.Now.Year Pod Talk. All rights reserved.
                 </p>
             </div>
         </div>
 
     </div>
 </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var footerForm = document.getElementById('footerNewsletterForm');
+    if (footerForm) {
+        footerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var submitButton = this.querySelector('button[type="submit"]');
+            var messageDiv = document.getElementById('footerNewsletterMessage');
+            var formData = new FormData(this);
+
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Subscribing...';
+
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    messageDiv.innerHTML = '<div class="alert alert-success alert-dismissible fade show" role="alert"><i class="bi bi-check-circle-fill me-2"></i>' + (data.message || 'Thank you for subscribing!') + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                    footerForm.reset();
+                } else {
+                    messageDiv.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><i class="bi bi-exclamation-triangle-fill me-2"></i>' + data.message + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                }
+            })
+            .catch(function(error) {
+                messageDiv.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><i class="bi bi-exclamation-triangle-fill me-2"></i>An error occurred. Please try again.</div>';
+            })
+            .finally(function() {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="bi bi-send-fill me-2"></i>Subscribe';
+            });
+        });
+    }
+});
+</script>

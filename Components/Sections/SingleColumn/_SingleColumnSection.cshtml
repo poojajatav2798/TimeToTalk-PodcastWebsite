@@ -1,0 +1,13 @@
+@using Kentico.Web.Mvc
+@using Kentico.PageBuilder.Web.Mvc
+@model Kentico.PageBuilder.Web.Mvc.ComponentViewModel<Podcast.Web.Components.Sections.SingleColumn.SingleColumnSectionProperties>
+
+<section class="podtalk-section single-column-section @Model.Properties.CustomClass">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                @await Html.Kentico().WidgetZoneAsync()
+            </div>
+        </div>
+    </div>
+</section>

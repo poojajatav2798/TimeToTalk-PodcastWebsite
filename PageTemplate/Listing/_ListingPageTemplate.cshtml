@@ -1,0 +1,13 @@
+@using Kentico.Content.Web.Mvc.PageBuilder
+@using Kentico.PageBuilder.Web.Mvc
+@using Kentico.Web.Mvc
+@addTagHelper *, Kentico.Content.Web.Mvc
+
+@model TemplateViewModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Event Listing - Tiya Golf Club";
+}
+
+<editable-area area-identifier="listing-area"></editable-area>

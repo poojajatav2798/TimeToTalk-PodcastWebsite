@@ -1,4 +1,8 @@
-﻿
+
+@using Kentico.Web.Mvc
+@using Kentico.PageBuilder.Web.Mvc
+@inject Kentico.Content.Web.Mvc.IWebPageDataContextRetriever WebPageDataContextRetriever
+
 @{
     ViewData["Title"] = "Episodes";
     int  currentPage = ViewBag.CurrentPage;
@@ -8,6 +12,14 @@
 }
 
 @* ── PAGE HEADER (wave background) ── *@
+<!-- Kentico Page Builder Editable Area for Editors -->
+@if (WebPageDataContextRetriever.TryRetrieve(out var pageContext))
+{
+    <div class="page-builder-area">
+        @await Html.Kentico().EditableAreaAsync("episodes_main_area")
+    </div>
+}
+
 <header class="site-header d-flex align-items-center">
     <div class="container">
         <h2>All Episodes</h2>

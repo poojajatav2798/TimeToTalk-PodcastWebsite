@@ -1,0 +1,69 @@
+@model Podcast.Web.Components.Widgets.TiyaHeroBanner.TiyaHeroBannerProperties
+
+@{
+    var words = (Model.AnimatedWords ?? "Modern, Creative, Lifestyle")
+        .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+        .Select(w => w.Trim())
+        .Where(w => !string.IsNullOrEmpty(w))
+        .ToList();
+
+    if (!words.Any())
+    {
+        words.Add("Modern");
+        words.Add("Creative");
+        words.Add("Lifestyle");
+    }
+}
+
+<section class="hero-section d-flex justify-content-center align-items-center" id="section_1">
+    <div class="section-overlay"></div>
+
+    <svg viewBox="0 0 1962 178" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <path fill="#3D405B" d="M 0 114 C 118.5 114 118.5 167 237 167 L 237 167 L 237 0 L 0 0 Z" stroke-width="0"></path>
+        <path fill="#3D405B" d="M 236 167 C 373 167 373 128 510 128 L 510 128 L 510 0 L 236 0 Z" stroke-width="0"></path>
+        <path fill="#3D405B" d="M 509 128 C 607 128 607 153 705 153 L 705 153 L 705 0 L 509 0 Z" stroke-width="0"></path>
+        <path fill="#3D405B" d="M 704 153 C 812 153 812 113 920 113 L 920 113 L 920 0 L 704 0 Z" stroke-width="0"></path>
+        <path fill="#3D405B" d="M 919 113 C 1048.5 113 1048.5 148 1178 148 L 1178 148 L 1178 0 L 919 0 Z" stroke-width="0"></path>
+        <path fill="#3D405B" d="M 1177 148 C 1359.5 148 1359.5 129 1542 129 L 1542 129 L 1542 0 L 1177 0 Z" stroke-width="0"></path>
+        <path fill="#3D405B" d="M 1541 129 C 1751.5 129 1751.5 138 1962 138 L 1962 138 L 1962 0 L 1541 0 Z" stroke-width="0"></path>
+    </svg>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 col-12 mb-5 mb-lg-0">
+                <h2 class="text-white">Welcome to the Club</h2>
+
+                <h1 class="cd-headline rotate-1 text-white mb-4 pb-2">
+                    <span>@Model.HeroTitle is</span>
+                    <span class="cd-words-wrapper">
+                        @for (int i = 0; i < words.Count; i++)
+                        {
+                            <b class="@(i == 0 ? "is-visible" : "")">@words[i]</b>
+                        }
+                    </span>
+                </h1>
+
+                <div class="custom-btn-group">
+                    <a href="@Model.Button1Link" class="btn custom-btn smoothscroll me-3">@Model.Button1Text</a>
+                    <a href="@Model.Button2Link" class="link smoothscroll">@Model.Button2Text</a>
+                </div>
+            </div>
+
+            <div class="col-lg-6 col-12 col-custom">
+                <div class="ratio ratio-16x9">
+                    <iframe src="@Model.VideoUrl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <svg viewBox="0 0 1962 178" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <path fill="#ffffff" d="M 0 114 C 118.5 114 118.5 167 237 167 L 237 167 L 237 0 L 0 0 Z" stroke-width="0"></path>
+        <path fill="#ffffff" d="M 236 167 C 373 167 373 128 510 128 L 510 128 L 510 0 L 236 0 Z" stroke-width="0"></path>
+        <path fill="#ffffff" d="M 509 128 C 607 128 607 153 705 153 L 705 153 L 705 0 L 509 0 Z" stroke-width="0"></path>
+        <path fill="#ffffff" d="M 704 153 C 812 153 812 113 920 113 L 920 113 L 920 0 L 704 0 Z" stroke-width="0"></path>
+        <path fill="#ffffff" d="M 919 113 C 1048.5 113 1048.5 148 1178 148 L 1178 148 L 1178 0 L 919 0 Z" stroke-width="0"></path>
+        <path fill="#ffffff" d="M 1177 148 C 1359.5 148 1359.5 129 1542 129 L 1542 129 L 1542 0 L 1177 0 Z" stroke-width="0"></path>
+        <path fill="#ffffff" d="M 1541 129 C 1751.5 129 1751.5 138 1962 138 L 1962 138 L 1962 0 L 1541 0 Z" stroke-width="0"></path>
+    </svg>
+</section>

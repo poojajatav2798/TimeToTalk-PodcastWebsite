@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TimeToTalk;
 
 namespace Podcast.Web.Controllers
 {
@@ -20,24 +21,17 @@ namespace Podcast.Web.Controllers
             _topicRepo = topicRepo;
         }
 
-        // GET: /episodes
         public async Task<IActionResult> Index(string? topic, string? filter, int page = 1)
         {
             const int pageSize = 6;
             if (page < 1) page = 1;
 
-            // 1. Fetch episodes and topics from Content Hub
             var episodeEntities = await _episodeRepo.GetAllEpisodesAsync();
             var topicEntities = await _topicRepo.GetAllTopicsAsync();
 
             var episodes = episodeEntities?.Select(e => e.ToViewModel()).ToList() ?? new List<EpisodeViewModel>();
             var topics = topicEntities?.Select(t => t.ToViewModel()).ToList() ?? new List<TopicViewModel>();
 
-            // Fallback to sample data if Content Hub is empty
-            if (!episodes.Any()) episodes = SampleData.GetEpisodes();
-            if (!topics.Any()) topics = SampleData.GetTopics();
-
-            // 2. Filter by topic or trending
             if (!string.IsNullOrWhiteSpace(topic))
             {
                 episodes = episodes.Where(e =>
@@ -49,7 +43,6 @@ namespace Podcast.Web.Controllers
                 episodes = episodes.Where(e => e.IsTrending).ToList();
             }
 
-            // 3. Pagination
             int totalEpisodes = episodes.Count;
             int totalPages = (int)Math.Ceiling(totalEpisodes / (double)pageSize);
             if (totalPages < 1) totalPages = 1;
@@ -69,7 +62,6 @@ namespace Podcast.Web.Controllers
             return View(pagedEpisodes);
         }
 
-        // GET: /episodes/{id}
         [Route("episodes/{id}")]
         public async Task<IActionResult> Detail(string id)
         {
@@ -80,7 +72,6 @@ namespace Podcast.Web.Controllers
 
             EpisodeViewModel? episode = null;
 
-            // Try fetch from Kentico Content Hub by slug
             var episodeEntity = await _episodeRepo.GetEpisodeBySlugAsync(id);
             if (episodeEntity != null)
             {
@@ -96,20 +87,11 @@ namespace Podcast.Web.Controllers
                 }
             }
 
-            // Fallback to SampleData
-            if (episode == null)
-            {
-                episode = SampleData.GetEpisodes().FirstOrDefault(e => 
-                    e.Id.ToString() == id || 
-                    e.Slug.Equals(id, StringComparison.OrdinalIgnoreCase));
-            }
-
             if (episode == null)
             {
                 return NotFound();
             }
 
-            // Fetch related episodes
             var relatedEntities = await _episodeRepo.GetRelatedEpisodesAsync(id, count: 3);
             var related = relatedEntities?.Select(e => e.ToViewModel()).ToList() ?? new List<EpisodeViewModel>();
             if (!related.Any())

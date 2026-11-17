@@ -17,7 +17,6 @@ namespace Podcast.Web.Controllers
             _topicRepo = topicRepo;
         }
 
-        // GET: /topics
         public async Task<IActionResult> Index()
         {
             var topicEntities = await _topicRepo.GetAllTopicsAsync();

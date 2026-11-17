@@ -1,0 +1,16 @@
+@using Kentico.Web.Mvc
+@using Kentico.PageBuilder.Web.Mvc
+@model Kentico.PageBuilder.Web.Mvc.ComponentViewModel<Podcast.Web.Components.Sections.TwoColumn.TwoColumnSectionProperties>
+
+<section class="podtalk-section two-column-section @Model.Properties.CustomClass">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 col-12 mb-4 mb-lg-0">
+                @await Html.Kentico().WidgetZoneAsync("left_zone")
+            </div>
+            <div class="col-lg-6 col-12">
+                @await Html.Kentico().WidgetZoneAsync("right_zone")
+            </div>
+        </div>
+    </div>
+</section>

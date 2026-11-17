@@ -1,5 +1,17 @@
+@using Kentico.Web.Mvc
+@using Kentico.PageBuilder.Web.Mvc
+@inject Kentico.Content.Web.Mvc.IWebPageDataContextRetriever WebPageDataContextRetriever
+
 @{
     ViewData["Title"] = "Contact Us";
+}
+
+<!-- Kentico Page Builder Editable Area for Editors -->
+@if (WebPageDataContextRetriever.TryRetrieve(out var pageContext))
+{
+    <div class="page-builder-area">
+        @await Html.Kentico().EditableAreaAsync("contact_main_area")
+    </div>
 }
 
 <!-- PAGE HEADER -->

@@ -30,9 +30,7 @@ namespace Podcast.Web.Services
             var query = new ContentItemQueryBuilder()
                 .ForContentType(
                     PodcastEpisode.CONTENT_TYPE_NAME,
-                    q => q.OrderBy(
-                            nameof(PodcastEpisode.PublishDate),
-                            "DESC")
+                    q => q.OrderBy($"{nameof(PodcastEpisode.PublishDate)} DESC")
                           .TopN(count));
 
             return await _queryExecutor.GetMappedResult<PodcastEpisode>(query);
@@ -43,7 +41,7 @@ namespace Podcast.Web.Services
             var query = new ContentItemQueryBuilder()
                 .ForContentType(PodcastEpisode.CONTENT_TYPE_NAME,
                     q => q.Where(where => where.WhereTrue(nameof(PodcastEpisode.EpisodeIsTrending)))
-                          .OrderBy(nameof(PodcastEpisode.PublishDate), "DESC")
+                          .OrderBy($"{nameof(PodcastEpisode.PublishDate)} DESC")
                           .TopN(count));
             return await _queryExecutor.GetMappedResult<PodcastEpisode>(query);
         }

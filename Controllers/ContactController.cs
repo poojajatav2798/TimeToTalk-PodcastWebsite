@@ -1,17 +1,16 @@
 #nullable enable
 using Microsoft.AspNetCore.Mvc;
+using TimeToTalk;
 
 namespace Podcast.Web.Controllers
 {
     public class ContactController : Controller
     {
-        // GET: /contact
         public IActionResult Index()
         {
             return View();
         }
 
-        // POST: /contact
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Submit(string name, string email, string company, string message)

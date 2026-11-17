@@ -2,9 +2,8 @@
     <div class="container">
 
         <!-- LOGO -->
-        <a class="navbar-brand" href="/">
-            <strong>Pod</strong>
-            <span>Talk</span>
+        <a class="navbar-brand me-lg-4" href="/">
+            <img src="/images/pod-talk-logo.png" class="logo-image img-fluid" alt="Pod Talk" style="max-height: 42px; width: auto;" />
         </a>
 
         <!-- HAMBURGER button (shows on mobile) -->
@@ -17,12 +16,31 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- NAV LINKS + SEARCH -->
+        <!-- SEARCH + NAV LINKS -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav align-items-lg-center ms-auto me-lg-5">
+
+            <!-- SEARCH FORM (at left side) -->
+            <form class="search-form d-flex my-2 my-lg-0 me-auto" action="/episodes" method="get" role="search">
+                <div class="input-group">
+                    <input class="form-control"
+                           type="search"
+                           name="search"
+                           placeholder="Search podcast" />
+                    <button class="btn custom-btn" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- NAV LINKS -->
+            <ul class="navbar-nav align-items-lg-center ms-auto">
 
                 <li class="nav-item">
                     <a class="nav-link" href="/">Home</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
                 </li>
 
                 <!-- Episodes with dropdown -->
@@ -47,18 +65,10 @@
 
             </ul>
 
-            <!-- SEARCH FORM -->
-            <form class="search-form d-flex" action="/search" method="get" role="search">
-                <div class="input-group">
-                    <input class="form-control"
-                           type="search"
-                           name="q"
-                           placeholder="Search podcast" />
-                    <button class="btn custom-btn" type="submit">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
-            </form>
+            <div class="ms-lg-4 mt-3 mt-lg-0">
+                <a href="#newsletter-section" class="btn custom-btn custom-border-btn smoothscroll">Subscribe</a>
+            </div>
+
         </div>
 
     </div>
