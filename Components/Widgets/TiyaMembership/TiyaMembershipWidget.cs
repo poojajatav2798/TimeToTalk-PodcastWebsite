@@ -29,6 +29,7 @@ namespace Podcast.Web.Components.Widgets.TiyaMembership
         public TiyaMembershipProperties Properties { get; set; } = new();
         public List<MembershipTierModel> Tiers { get; set; } = new();
         public List<MembershipFeatureRowModel> Features { get; set; } = new();
+        public List<FormFieldModel> FormFields { get; set; } = new();
     }
 
     public class TiyaMembershipWidgetViewComponent : ViewComponent
@@ -46,12 +47,14 @@ namespace Podcast.Web.Components.Widgets.TiyaMembership
         {
             var tiers = await _contentRepo.GetMembershipTiersAsync();
             var features = await _contentRepo.GetMembershipFeaturesAsync();
+            var formFields = await _contentRepo.GetMembershipFormFieldsAsync();
 
             var model = new TiyaMembershipViewModel
             {
                 Properties = widgetModel.Properties,
                 Tiers = tiers,
-                Features = features
+                Features = features,
+                FormFields = formFields
             };
 
             return View("~/Components/Widgets/TiyaMembership/_TiyaMembership.cshtml", model);

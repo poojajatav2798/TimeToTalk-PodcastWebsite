@@ -13,9 +13,13 @@
         words.Add("Creative");
         words.Add("Lifestyle");
     }
+
+    var bgStyle = !string.IsNullOrWhiteSpace(Model.BackgroundImageUrl)
+        ? $"background-image: url('{Model.BackgroundImageUrl}'); background-size: cover; background-position: center;"
+        : "";
 }
 
-<section class="hero-section d-flex justify-content-center align-items-center" id="section_1">
+<section class="hero-section d-flex justify-content-center align-items-center" id="section_1" style="@bgStyle">
     <div class="section-overlay"></div>
 
     <svg viewBox="0 0 1962 178" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -31,10 +35,10 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-6 col-12 mb-5 mb-lg-0">
-                <h2 class="text-white">Welcome to the Club</h2>
+                <h2 class="text-white">@(string.IsNullOrWhiteSpace(Model.Subtitle) ? "Welcome to the Club" : Model.Subtitle)</h2>
 
                 <h1 class="cd-headline rotate-1 text-white mb-4 pb-2">
-                    <span>@Model.HeroTitle is</span>
+                    <span>@Model.HeroTitle @(string.IsNullOrWhiteSpace(Model.TitleConnector) ? "is" : Model.TitleConnector)</span>
                     <span class="cd-words-wrapper">
                         @for (int i = 0; i < words.Count; i++)
                         {

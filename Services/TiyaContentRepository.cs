@@ -174,6 +174,70 @@ namespace Podcast.Web.Services
             return all.FirstOrDefault(e => e.Id == id);
         }
 
+        public async Task<List<EventItemModel>> GetEventsByGuidsAsync(IEnumerable<Guid> guids)
+        {
+            var list = new List<EventItemModel>();
+            var guidList = guids?.ToList() ?? new List<Guid>();
+            if (!guidList.Any()) return list;
+
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(PodcastEpisode.CONTENT_TYPE_NAME, q =>
+                    {
+                        q.Where(w => w.WhereIn(nameof(IContentItemFieldsSource.SystemFields.ContentItemGUID), guidList));
+                    });
+
+                var episodes = await _queryExecutor.GetMappedResult<PodcastEpisode>(builder);
+                if (episodes != null)
+                {
+                    var epDict = episodes.ToDictionary(e => e.SystemFields.ContentItemGUID);
+                    int idx = 0;
+                    foreach (var g in guidList)
+                    {
+                        if (epDict.TryGetValue(g, out var ep))
+                        {
+                            var day = ep.PublishDate != default ? ep.PublishDate.Day.ToString() : "24";
+                            var monthYear = ep.PublishDate != default ? ep.PublishDate.ToString("MMM yyyy", CultureInfo.InvariantCulture) : "Feb 2048";
+                            var price = !string.IsNullOrWhiteSpace(ep.EpisodeListensCount) ? ep.EpisodeListensCount : "$250";
+                            var location = !string.IsNullOrWhiteSpace(ep.EpisodeShortDescription) ? ep.EpisodeShortDescription : "National Center, NYC";
+                            var img = !string.IsNullOrWhiteSpace(ep.EpisodeThumbnail?.Url) 
+                                ? ep.EpisodeThumbnail.Url 
+                                : GetFallbackEventImage(ep.EpisodeNumber);
+                            var slug = !string.IsNullOrWhiteSpace(ep.EpisodeSlug) 
+                                ? ep.EpisodeSlug 
+                                : (ep.SystemFields.ContentItemName ?? $"event-{ep.EpisodeNumber}");
+
+                            list.Add(new EventItemModel
+                            {
+                                Id = ep.SystemFields.ContentItemID,
+                                Title = ep.EpisodeTitle ?? "Tournament Event",
+                                Day = day,
+                                MonthYear = monthYear,
+                                EventDate = ep.PublishDate,
+                                ImageUrl = img,
+                                Description = ep.EpisodeDescription ?? ep.EpisodeShortDescription ?? "Join us for our upcoming championship golf event.",
+                                Location = location,
+                                TicketPrice = price,
+                                Url = "/detail-page?slug=" + slug,
+                                Slug = slug,
+                                Category = ep.EpisodeTopicName ?? "Tournament",
+                                IsAltBackground = ep.EpisodeRequiresSubscription,
+                                Order = ep.EpisodeNumber
+                            });
+                            idx++;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error querying events by GUIDs from Content Hub.");
+            }
+
+            return list;
+        }
+
         // ==========================================
         // 2. DYNAMIC TEAM MEMBERS FROM CONTENT HUB
         // ==========================================
@@ -206,6 +270,7 @@ namespace Podcast.Web.Services
                             TwitterUrl = !string.IsNullOrWhiteSpace(h.HostTwitterURL) ? h.HostTwitterURL : "https://twitter.com",
                             WhatsAppUrl = !string.IsNullOrWhiteSpace(h.HostFacebookURL) ? h.HostFacebookURL : "https://whatsapp.com",
                             LinkedInUrl = !string.IsNullOrWhiteSpace(h.HostLinkedInURL) ? h.HostLinkedInURL : "https://linkedin.com",
+                            SocialLinks = ParseSocialLinks(h),
                             Order = idx++
                         });
                     }
@@ -233,6 +298,58 @@ namespace Podcast.Web.Services
             }
 
             return team;
+        }
+
+        public async Task<List<TeamMemberModel>> GetTeamMembersByGuidsAsync(IEnumerable<Guid> guids)
+        {
+            var list = new List<TeamMemberModel>();
+            var guidList = guids?.ToList() ?? new List<Guid>();
+            if (!guidList.Any()) return list;
+
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(PodcastHost.CONTENT_TYPE_NAME, q =>
+                    {
+                        q.Where(w => w.WhereIn(nameof(IContentItemFieldsSource.SystemFields.ContentItemGUID), guidList));
+                    });
+
+                var hosts = await _queryExecutor.GetMappedResult<PodcastHost>(builder);
+                if (hosts != null)
+                {
+                    var hostDict = hosts.ToDictionary(h => h.SystemFields.ContentItemGUID);
+                    int order = 1;
+                    foreach (var g in guidList)
+                    {
+                        if (hostDict.TryGetValue(g, out var h))
+                        {
+                            var img = order == 1 
+                                ? "/images/members/portrait-young-handsome-businessman-wearing-suit-standing-with-crossed-arms-with-isolated-studio-white-background.jpg"
+                                : "/images/members/successful-asian-lady-boss-red-blazer-holding-clipboard-with-documens-pen-working-looking-happy-white-background.jpg";
+
+                            list.Add(new TeamMemberModel
+                            {
+                                Id = h.SystemFields.ContentItemID,
+                                Name = h.HostName ?? "Club Staff",
+                                Role = h.HostRole ?? "Management",
+                                Biography = h.HostBiography ?? "",
+                                ImageUrl = img,
+                                TwitterUrl = !string.IsNullOrWhiteSpace(h.HostTwitterURL) ? h.HostTwitterURL : "https://twitter.com",
+                                WhatsAppUrl = !string.IsNullOrWhiteSpace(h.HostFacebookURL) ? h.HostFacebookURL : "https://whatsapp.com",
+                                LinkedInUrl = !string.IsNullOrWhiteSpace(h.HostLinkedInURL) ? h.HostLinkedInURL : "https://linkedin.com",
+                                SocialLinks = ParseSocialLinks(h),
+                                Order = order++
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load team members by GUIDs.");
+            }
+
+            return list;
         }
 
         // ==========================================
@@ -301,13 +418,18 @@ namespace Podcast.Web.Services
                 {
                     foreach (var b in blocks.OrderBy(x => x.DisplayOrder))
                     {
-                        var flags = (b.PrimaryButtonURL ?? "1,1,1").Split(',');
+                        var flags = (b.PrimaryButtonURL ?? "1,1,1").Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        var availList = new List<bool>();
+                        foreach (var f in flags)
+                        {
+                            var trimmed = f.Trim();
+                            availList.Add(trimmed == "1" || trimmed.Equals("true", StringComparison.OrdinalIgnoreCase) || trimmed.Equals("yes", StringComparison.OrdinalIgnoreCase));
+                        }
+
                         features.Add(new MembershipFeatureRowModel
                         {
                             FeatureName = b.Heading ?? "Feature",
-                            Tier1Available = flags.Length > 0 && flags[0].Trim() == "1",
-                            Tier2Available = flags.Length > 1 && flags[1].Trim() == "1",
-                            Tier3Available = flags.Length > 2 && flags[2].Trim() == "1"
+                            TierAvailabilityList = availList
                         });
                     }
                 }
@@ -325,6 +447,109 @@ namespace Podcast.Web.Services
             return features;
         }
 
+        public async Task<List<FormFieldModel>> GetMembershipFormFieldsAsync()
+        {
+            var fields = new List<FormFieldModel>();
+            try
+            {
+                var block = await GetContentBlockAsync("membership-form-fields");
+                if (block != null && !string.IsNullOrWhiteSpace(block.Description))
+                {
+                    var lines = block.Description.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var line in lines)
+                    {
+                        var parts = line.Split('|');
+                        if (parts.Length >= 2)
+                        {
+                            var name = parts[0].Trim();
+                            var label = parts[1].Trim();
+                            var type = parts.Length > 2 ? parts[2].Trim().ToLowerInvariant() : "text";
+                            var placeholder = parts.Length > 3 ? parts[3].Trim() : label;
+                            var required = parts.Length > 4 ? (parts[4].Trim() == "1" || parts[4].Trim().Equals("true", StringComparison.OrdinalIgnoreCase)) : true;
+                            var options = parts.Length > 5 
+                                ? parts[5].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(o => o.Trim()).ToList()
+                                : new List<string>();
+
+                            fields.Add(new FormFieldModel
+                            {
+                                Name = name,
+                                Label = label,
+                                Type = type,
+                                Placeholder = placeholder,
+                                IsRequired = required,
+                                Options = options
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load membership form fields from Content Hub.");
+            }
+
+            if (!fields.Any())
+            {
+                fields = GetDefaultMembershipFormFields();
+            }
+
+            return fields;
+        }
+
+        private static List<FormFieldModel> GetDefaultMembershipFormFields()
+        {
+            return new List<FormFieldModel>
+            {
+                new FormFieldModel { Name = "fullName", Label = "Full Name", Type = "text", Placeholder = "Full Name", IsRequired = true },
+                new FormFieldModel { Name = "email", Label = "Email address", Type = "email", Placeholder = "Email address", IsRequired = true },
+                new FormFieldModel { Name = "phone", Label = "Phone Number", Type = "phone", Placeholder = "010-020-0340", IsRequired = false },
+                new FormFieldModel { Name = "tier", Label = "Membership Tier", Type = "dropdown", Placeholder = "Select Plan", IsRequired = false, Options = new List<string> { "Standard Access ($600)", "Country Club Pro ($850)", "Platinum Masters ($1,100)" } },
+                new FormFieldModel { Name = "comments", Label = "Comments", Type = "textarea", Placeholder = "Describe message here", IsRequired = false }
+            };
+        }
+
+        private static List<SocialMediaLinkModel> ParseSocialLinks(PodcastHost h)
+        {
+            var links = new List<SocialMediaLinkModel>();
+            if (!string.IsNullOrWhiteSpace(h.HostTwitterURL))
+            {
+                links.Add(new SocialMediaLinkModel { Platform = "Twitter", IconClass = "bi-twitter", Url = h.HostTwitterURL.Trim() });
+            }
+            if (!string.IsNullOrWhiteSpace(h.HostFacebookURL))
+            {
+                var u = h.HostFacebookURL.Trim();
+                var isWa = u.Contains("whatsapp", StringComparison.OrdinalIgnoreCase) || u.Contains("wa.me", StringComparison.OrdinalIgnoreCase);
+                links.Add(new SocialMediaLinkModel { Platform = isWa ? "WhatsApp" : "Facebook", IconClass = isWa ? "bi-whatsapp" : "bi-facebook", Url = u });
+            }
+            if (!string.IsNullOrWhiteSpace(h.HostLinkedInURL))
+            {
+                links.Add(new SocialMediaLinkModel { Platform = "LinkedIn", IconClass = "bi-linkedin", Url = h.HostLinkedInURL.Trim() });
+            }
+
+            var extra = $"{h.HostSpecialties} {h.HostBiography}";
+            if (!string.IsNullOrWhiteSpace(extra) && extra.Contains("http", StringComparison.OrdinalIgnoreCase))
+            {
+                var tokens = extra.Split(new[] { ' ', ',', ';', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var token in tokens)
+                {
+                    if (token.Contains("instagram.com", StringComparison.OrdinalIgnoreCase) && !links.Any(l => l.Platform.Equals("Instagram", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        links.Add(new SocialMediaLinkModel { Platform = "Instagram", IconClass = "bi-instagram", Url = token.Trim() });
+                    }
+                    else if (token.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) && !links.Any(l => l.Platform.Equals("YouTube", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        links.Add(new SocialMediaLinkModel { Platform = "YouTube", IconClass = "bi-youtube", Url = token.Trim() });
+                    }
+                    else if (token.Contains("facebook.com", StringComparison.OrdinalIgnoreCase) && !links.Any(l => l.Platform.Equals("Facebook", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        links.Add(new SocialMediaLinkModel { Platform = "Facebook", IconClass = "bi-facebook", Url = token.Trim() });
+                    }
+                }
+            }
+
+            return links;
+        }
+
         public async Task<WebsiteContentBlock?> GetContentBlockAsync(string blockName)
         {
             try
@@ -338,6 +563,23 @@ namespace Podcast.Web.Services
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to load content block '{BlockName}' from Content Hub.", blockName);
+                return null;
+            }
+        }
+
+        public async Task<WebsiteContentBlock?> GetContentBlockByGuidAsync(Guid guid)
+        {
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(WebsiteContentBlock.CONTENT_TYPE_NAME, q => q.Where(w => w.WhereEquals(nameof(IContentItemFieldsSource.SystemFields.ContentItemGUID), guid)));
+
+                var blocks = await _queryExecutor.GetMappedResult<WebsiteContentBlock>(builder);
+                return blocks?.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load content block with GUID '{Guid}' from Content Hub.", guid);
                 return null;
             }
         }
@@ -421,8 +663,22 @@ namespace Podcast.Web.Services
                     if (!string.IsNullOrWhiteSpace(block.IconName))
                     {
                         var hourParts = block.IconName.Split('|', StringSplitOptions.TrimEntries);
-                        if (hourParts.Length > 0 && !string.IsNullOrWhiteSpace(hourParts[0])) footer.WeekdayHours = hourParts[0];
-                        if (hourParts.Length > 1 && !string.IsNullOrWhiteSpace(hourParts[1])) footer.WeekendHours = hourParts[1];
+                        if (hourParts.Length >= 5)
+                        {
+                            if (!string.IsNullOrWhiteSpace(hourParts[0])) footer.ScheduleTitle = hourParts[0];
+                            if (!string.IsNullOrWhiteSpace(hourParts[1])) footer.WeekdayLabel = hourParts[1];
+                            if (!string.IsNullOrWhiteSpace(hourParts[2])) footer.WeekdayHours = hourParts[2];
+                            if (!string.IsNullOrWhiteSpace(hourParts[3])) footer.WeekendLabel = hourParts[3];
+                            if (!string.IsNullOrWhiteSpace(hourParts[4])) footer.WeekendHours = hourParts[4];
+                        }
+                        else if (hourParts.Length >= 2)
+                        {
+                            footer.ScheduleTitle = "Join Us";
+                            footer.WeekdayLabel = "Mon-Fri";
+                            footer.WeekdayHours = hourParts[0];
+                            footer.WeekendLabel = "Sat-Sun";
+                            footer.WeekendHours = hourParts[1];
+                        }
                     }
 
                     if (!string.IsNullOrWhiteSpace(block.PrimaryButtonURL))
@@ -431,6 +687,21 @@ namespace Podcast.Web.Services
                         if (socialParts.Length > 0 && !string.IsNullOrWhiteSpace(socialParts[0])) footer.InstagramUrl = socialParts[0];
                         if (socialParts.Length > 1 && !string.IsNullOrWhiteSpace(socialParts[1])) footer.TwitterUrl = socialParts[1];
                         if (socialParts.Length > 2 && !string.IsNullOrWhiteSpace(socialParts[2])) footer.WhatsAppUrl = socialParts[2];
+                        if (socialParts.Length > 3 && !string.IsNullOrWhiteSpace(socialParts[3])) footer.FacebookUrl = socialParts[3];
+                        if (socialParts.Length > 4 && !string.IsNullOrWhiteSpace(socialParts[4])) footer.LinkedInUrl = socialParts[4];
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(block.SecondaryButtonText))
+                    {
+                        footer.PhoneNumber = block.SecondaryButtonText.Trim();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(block.SecondaryButtonURL))
+                    {
+                        var extraParts = block.SecondaryButtonURL.Split('|', StringSplitOptions.TrimEntries);
+                        if (extraParts.Length > 0 && !string.IsNullOrWhiteSpace(extraParts[0])) footer.EmailAddress = extraParts[0];
+                        if (extraParts.Length > 1 && !string.IsNullOrWhiteSpace(extraParts[1])) footer.BrandLogoUrl = extraParts[1];
+                        if (extraParts.Length > 2 && !string.IsNullOrWhiteSpace(extraParts[2])) footer.DesignerUrl = extraParts[2];
                     }
                 }
             }
@@ -451,9 +722,11 @@ namespace Podcast.Web.Services
                 { nameof(WebsiteContentBlock.BlockName), codeName },
                 { nameof(WebsiteContentBlock.Heading), model.CopyrightText },
                 { nameof(WebsiteContentBlock.Description), model.Description },
-                { nameof(WebsiteContentBlock.IconName), $"{model.WeekdayHours}|{model.WeekendHours}" },
+                { nameof(WebsiteContentBlock.IconName), $"{model.ScheduleTitle}|{model.WeekdayLabel}|{model.WeekdayHours}|{model.WeekendLabel}|{model.WeekendHours}" },
                 { nameof(WebsiteContentBlock.PrimaryButtonText), model.DesignerCredit },
-                { nameof(WebsiteContentBlock.PrimaryButtonURL), $"{model.InstagramUrl}|{model.TwitterUrl}|{model.WhatsAppUrl}" },
+                { nameof(WebsiteContentBlock.PrimaryButtonURL), $"{model.InstagramUrl}|{model.TwitterUrl}|{model.WhatsAppUrl}|{model.FacebookUrl}|{model.LinkedInUrl}" },
+                { nameof(WebsiteContentBlock.SecondaryButtonText), model.PhoneNumber },
+                { nameof(WebsiteContentBlock.SecondaryButtonURL), $"{model.EmailAddress}|{model.BrandLogoUrl}|{model.DesignerUrl}" },
                 { nameof(WebsiteContentBlock.BlockType), "FooterConfig" },
                 { nameof(WebsiteContentBlock.IsActive), true }
             };
@@ -469,6 +742,92 @@ namespace Podcast.Web.Services
 
             _logger.LogInformation("Saved dynamic footer configuration ID {Id} in Content Hub folder '{Folder}'.", itemId, FOLDER_SHARED);
             return itemId;
+        }
+
+        // ==========================================
+        // DYNAMIC NAVIGATION ITEMS (CONTENT HUB)
+        // ==========================================
+        public async Task<List<NavigationItemViewModel>> GetContentHubNavigationItemsAsync()
+        {
+            var list = new List<NavigationItemViewModel>();
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(WebsiteContentBlock.CONTENT_TYPE_NAME, q =>
+                    {
+                        q.Where(w => w.WhereEquals(nameof(WebsiteContentBlock.BlockType), "NavigationItem")
+                                      .WhereTrue(nameof(WebsiteContentBlock.IsActive)))
+                         .OrderBy(nameof(WebsiteContentBlock.DisplayOrder));
+                    });
+
+                var blocks = await _queryExecutor.GetMappedResult<WebsiteContentBlock>(builder);
+                if (blocks != null)
+                {
+                    foreach (var b in blocks)
+                    {
+                        var url = !string.IsNullOrWhiteSpace(b.PrimaryButtonURL) ? b.PrimaryButtonURL.Trim() : "/";
+                        list.Add(new NavigationItemViewModel
+                        {
+                            WebPageItemId = b.SystemFields.ContentItemID,
+                            Title = !string.IsNullOrWhiteSpace(b.Heading) ? b.Heading.Trim() : (b.BlockName ?? "Navigation Link"),
+                            Url = url,
+                            IsClickScroll = url.StartsWith("#") || url.Contains("/#"),
+                            IsActive = false
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load dynamic navigation items from Content Hub.");
+            }
+            return list;
+        }
+
+        public async Task<int> CreateOrUpdateNavigationItemAsync(NavigationItemViewModel item, CancellationToken cancellationToken = default)
+        {
+            int folderId = await EnsureFolderAsync("Navigation", "Navigation", cancellationToken);
+            string codeName = "nav-" + CleanSlug(item.Title);
+
+            var data = new Dictionary<string, object>
+            {
+                { nameof(WebsiteContentBlock.BlockName), codeName },
+                { nameof(WebsiteContentBlock.Heading), item.Title },
+                { nameof(WebsiteContentBlock.PrimaryButtonURL), item.Url },
+                { nameof(WebsiteContentBlock.BlockType), "NavigationItem" },
+                { nameof(WebsiteContentBlock.DisplayOrder), item.WebPageItemId > 0 ? item.WebPageItemId : 1 },
+                { nameof(WebsiteContentBlock.IsActive), true }
+            };
+
+            int itemId = await SaveOrUpdateItemAsync(
+                WebsiteContentBlock.CONTENT_TYPE_NAME,
+                codeName,
+                item.Title,
+                data,
+                item.WebPageItemId > 0 ? item.WebPageItemId : null,
+                folderId,
+                cancellationToken);
+
+            _logger.LogInformation("Saved navigation item '{Title}' ID {Id} in Content Hub folder 'Navigation'.", item.Title, itemId);
+            return itemId;
+        }
+
+        public async Task<bool> DeleteNavigationItemAsync(string codeName, CancellationToken cancellationToken = default)
+        {
+            var block = await GetContentBlockAsync(codeName);
+            if (block == null) return false;
+            try
+            {
+                var itemManager = _itemManagerFactory.Create(GetAdminUserId());
+                await itemManager.Delete(block.SystemFields.ContentItemID, "en", cancellationToken);
+                _logger.LogInformation("Deleted navigation item '{CodeName}'.", codeName);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete navigation item '{CodeName}'.", codeName);
+                return false;
+            }
         }
 
         // ==========================================

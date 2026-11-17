@@ -22,62 +22,62 @@
                 }
             </div>
 
-            <div class="col-lg-3 col-md-6 col-12 mb-4 mb-lg-0 mb-md-0">
-                <div class="member-block">
-                    <div class="member-block-image-wrap">
-                        <img src="@Model.Properties.Member1ImageUrl" class="member-block-image img-fluid" alt="@Model.Properties.Member1Name">
+            @if (Model.TeamMembers != null && Model.TeamMembers.Any())
+            {
+                foreach (var member in Model.TeamMembers)
+                {
+                    <div class="col-lg-3 col-md-6 col-12 mb-4 mb-lg-0">
+                        <div class="member-block">
+                            <div class="member-block-image-wrap">
+                                <img src="@member.ImageUrl" class="member-block-image img-fluid" alt="@member.Name">
 
-                        <ul class="social-icon">
-                            @if (!string.IsNullOrEmpty(Model.Properties.Member1TwitterUrl))
-                            {
-                                <li class="social-icon-item">
-                                    <a href="@Model.Properties.Member1TwitterUrl" class="social-icon-link bi-twitter" target="_blank" rel="noopener"></a>
-                                </li>
-                            }
+                                <ul class="social-icon">
+                                    @if (member.SocialLinks != null && member.SocialLinks.Any())
+                                    {
+                                        foreach (var social in member.SocialLinks)
+                                        {
+                                            if (!string.IsNullOrWhiteSpace(social.Url))
+                                            {
+                                                <li class="social-icon-item">
+                                                    <a href="@social.Url" class="social-icon-link @social.IconClass" target="_blank" rel="noopener" title="@social.Platform"></a>
+                                                </li>
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @if (!string.IsNullOrEmpty(member.TwitterUrl))
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@member.TwitterUrl" class="social-icon-link bi-twitter" target="_blank" rel="noopener" title="Twitter"></a>
+                                            </li>
+                                        }
 
-                            @if (!string.IsNullOrEmpty(Model.Properties.Member1WhatsAppUrl))
-                            {
-                                <li class="social-icon-item">
-                                    <a href="@Model.Properties.Member1WhatsAppUrl" class="social-icon-link bi-whatsapp" target="_blank" rel="noopener"></a>
-                                </li>
-                            }
-                        </ul>
+                                        @if (!string.IsNullOrEmpty(member.WhatsAppUrl))
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@member.WhatsAppUrl" class="social-icon-link bi-whatsapp" target="_blank" rel="noopener" title="WhatsApp"></a>
+                                            </li>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(member.LinkedInUrl))
+                                        {
+                                            <li class="social-icon-item">
+                                                <a href="@member.LinkedInUrl" class="social-icon-link bi-linkedin" target="_blank" rel="noopener" title="LinkedIn"></a>
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+
+                            <div class="member-block-info d-flex align-items-center">
+                                <h4>@member.Name</h4>
+                                <p class="ms-auto">@member.Role</p>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="member-block-info d-flex align-items-center">
-                        <h4>@Model.Properties.Member1Name</h4>
-                        <p class="ms-auto">@Model.Properties.Member1Role</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-6 col-12">
-                <div class="member-block">
-                    <div class="member-block-image-wrap">
-                        <img src="@Model.Properties.Member2ImageUrl" class="member-block-image img-fluid" alt="@Model.Properties.Member2Name">
-
-                        <ul class="social-icon">
-                            @if (!string.IsNullOrEmpty(Model.Properties.Member2LinkedInUrl))
-                            {
-                                <li class="social-icon-item">
-                                    <a href="@Model.Properties.Member2LinkedInUrl" class="social-icon-link bi-linkedin" target="_blank" rel="noopener"></a>
-                                </li>
-                            }
-                            @if (!string.IsNullOrEmpty(Model.Properties.Member2TwitterUrl))
-                            {
-                                <li class="social-icon-item">
-                                    <a href="@Model.Properties.Member2TwitterUrl" class="social-icon-link bi-twitter" target="_blank" rel="noopener"></a>
-                                </li>
-                            }
-                        </ul>
-                    </div>
-
-                    <div class="member-block-info d-flex align-items-center">
-                        <h4>@Model.Properties.Member2Name</h4>
-                        <p class="ms-auto">@Model.Properties.Member2Role</p>
-                    </div>
-                </div>
-            </div>
+                }
+            }
 
         </div>
     </div>

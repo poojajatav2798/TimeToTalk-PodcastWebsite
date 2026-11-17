@@ -37,7 +37,17 @@ namespace Podcast.Web.Components.Widgets.TiyaEvents
         public async Task<IViewComponentResult> InvokeAsync(ComponentViewModel<TiyaEventsProperties> widgetModel)
         {
             var properties = widgetModel.Properties;
-            var dynamicEvents = await _contentRepo.GetEventsAsync();
+            List<EventItemModel> dynamicEvents;
+
+            if (properties.SelectedEvents != null && System.Linq.Enumerable.Any(properties.SelectedEvents))
+            {
+                var guids = System.Linq.Enumerable.Select(properties.SelectedEvents, e => e.Identifier);
+                dynamicEvents = await _contentRepo.GetEventsByGuidsAsync(guids);
+            }
+            else
+            {
+                dynamicEvents = await _contentRepo.GetEventsAsync();
+            }
 
             var model = new TiyaEventsViewModel
             {

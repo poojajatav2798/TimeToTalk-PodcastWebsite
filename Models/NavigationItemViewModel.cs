@@ -34,8 +34,12 @@ namespace Podcast.Web.Models
         public List<NavigationItemViewModel> FooterItems { get; set; } = new();
         public string BrandTitle { get; set; } = "Tiya";
         public string BrandSubtitle { get; set; } = "Golf Club";
+        public string BrandLogoUrl { get; set; } = "/images/logo.png";
         public string Description { get; set; } = "Since 1984, Tiya is ranked #8 in the top 10 golf courses in the world. Modern, creative and lifestyle golf community.";
+        public string ScheduleTitle { get; set; } = "Join Us";
+        public string WeekdayLabel { get; set; } = "Mon-Fri";
         public string WeekdayHours { get; set; } = "6:00 AM - 6:00 PM";
+        public string WeekendLabel { get; set; } = "Sat-Sun";
         public string WeekendHours { get; set; } = "6:30 AM - 8:30 PM";
         public string CopyrightText { get; set; } = "Copyright © 2048 Tiya Golf Club";
         public string DesignerCredit { get; set; } = "TemplateMo";
@@ -52,5 +56,7 @@ namespace Podcast.Web.Models
         public string InstagramUrl { get; set; } = "https://instagram.com";
         public string TwitterUrl { get; set; } = "https://twitter.com";
         public string WhatsAppUrl { get; set; } = "https://whatsapp.com";
+        public string FacebookUrl { get; set; } = "";
+        public string LinkedInUrl { get; set; } = "";
     }
 }

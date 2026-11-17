@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,12 +13,21 @@ namespace Podcast.Web.Services
     {
         // Querying Dynamic Data for UI
         Task<List<EventItemModel>> GetEventsAsync(int? topN = null);
+        Task<List<EventItemModel>> GetEventsByGuidsAsync(IEnumerable<Guid> guids);
         Task<EventItemModel?> GetEventBySlugAsync(string slug);
         Task<EventItemModel?> GetEventByIdAsync(int id);
         Task<List<TeamMemberModel>> GetTeamMembersAsync();
+        Task<List<TeamMemberModel>> GetTeamMembersByGuidsAsync(IEnumerable<System.Guid> guids);
         Task<List<MembershipTierModel>> GetMembershipTiersAsync();
         Task<List<MembershipFeatureRowModel>> GetMembershipFeaturesAsync();
+        Task<List<FormFieldModel>> GetMembershipFormFieldsAsync();
         Task<WebsiteContentBlock?> GetContentBlockAsync(string blockName);
+        Task<WebsiteContentBlock?> GetContentBlockByGuidAsync(System.Guid guid);
+
+        // Dynamic Navigation Items in Content Hub
+        Task<List<NavigationItemViewModel>> GetContentHubNavigationItemsAsync();
+        Task<int> CreateOrUpdateNavigationItemAsync(NavigationItemViewModel item, CancellationToken cancellationToken = default);
+        Task<bool> DeleteNavigationItemAsync(string codeName, CancellationToken cancellationToken = default);
 
         // CRUD Operations on Content Hub
         Task<int> CreateOrUpdateEventAsync(EventItemModel model, CancellationToken cancellationToken = default);

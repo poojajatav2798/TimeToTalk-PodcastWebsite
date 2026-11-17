@@ -18,15 +18,18 @@ namespace Podcast.Web.Services
     {
         private readonly IContentQueryExecutor _queryExecutor;
         private readonly IWebsiteChannelContext _websiteChannelContext;
+        private readonly ITiyaContentRepository _contentRepo;
         private readonly ILogger<NavigationService> _logger;
 
         public NavigationService(
             IContentQueryExecutor queryExecutor,
             IWebsiteChannelContext websiteChannelContext,
+            ITiyaContentRepository contentRepo,
             ILogger<NavigationService> logger)
         {
             _queryExecutor = queryExecutor;
             _websiteChannelContext = websiteChannelContext;
+            _contentRepo = contentRepo;
             _logger = logger;
         }
 
@@ -40,33 +43,42 @@ namespace Podcast.Web.Services
 
             try
             {
+                // First check if Content Hub has active navigation items configured
+                var contentHubItems = await _contentRepo.GetContentHubNavigationItemsAsync();
+
                 var sql = @"
 SELECT 
     W.WebPageItemID, 
     W.WebPageItemName, 
     W.WebPageItemOrder,
+    M.ContentItemLanguageMetadataDisplayName,
     CT.ClassName,
     U.WebPageUrlPath,
-    COALESCE(H.ShowInHeaderNavigation, A.ShowInHeaderNavigation, L.ShowInHeaderNavigation, D.ShowInHeaderNavigation, CP.ShowInHeaderNavigation, 1) AS ShowInHeaderNavigation,
+    COALESCE(H.ShowInHeaderNavigation, A.ShowInHeaderNavigation, L.ShowInHeaderNavigation, D.ShowInHeaderNavigation, CP.ShowInHeaderNavigation, 0) AS ShowInHeaderNavigation,
     COALESCE(H.NavigationTitle, A.NavigationTitle, L.NavigationTitle, D.NavigationTitle, CP.NavigationTitle, '') AS NavigationTitle,
-    COALESCE(H.NavigationOrder, A.NavigationOrder, L.NavigationOrder, D.NavigationOrder, CP.NavigationOrder, W.WebPageItemOrder) AS NavigationOrder
+    COALESCE(H.NavigationOrder, A.NavigationOrder, L.NavigationOrder, D.NavigationOrder, CP.NavigationOrder, W.WebPageItemOrder) AS NavigationOrder,
+    COALESCE(H.Title, A.Title, L.HeaderTitle, D.Title, CP.Title, '') AS PageTitle
 FROM CMS_WebPageItem W
 JOIN CMS_ContentItem CI ON W.WebPageItemContentItemID = CI.ContentItemID
 JOIN CMS_Class CT ON CI.ContentItemContentTypeID = CT.ClassID
 JOIN CMS_ContentItemCommonData C ON CI.ContentItemID = C.ContentItemCommonDataContentItemID
+LEFT JOIN CMS_ContentItemLanguageMetadata M ON M.ContentItemLanguageMetadataContentItemID = CI.ContentItemID
 LEFT JOIN CMS_WebPageUrlPath U ON U.WebPageUrlPathWebPageItemID = W.WebPageItemID AND U.WebPageUrlPathIsLatest = 1
 LEFT JOIN Podcastweb_HomePage H ON H.ContentItemDataCommonDataID = C.ContentItemCommonDataID
 LEFT JOIN TimeToTalk_AboutPage A ON A.ContentItemDataCommonDataID = C.ContentItemCommonDataID
 LEFT JOIN TimeToTalk_ListingPage L ON L.ContentItemDataCommonDataID = C.ContentItemCommonDataID
 LEFT JOIN TimeToTalk_DetailPage D ON D.ContentItemDataCommonDataID = C.ContentItemCommonDataID
 LEFT JOIN TimeToTalk_ContactPage CP ON CP.ContentItemDataCommonDataID = C.ContentItemCommonDataID
-WHERE C.ContentItemCommonDataIsLatest = 1
+WHERE (C.ContentItemCommonDataVersionStatus = 2 OR (C.ContentItemCommonDataIsLatest = 1 AND NOT EXISTS (
+    SELECT 1 FROM CMS_ContentItemCommonData C2 
+    WHERE C2.ContentItemCommonDataContentItemID = CI.ContentItemID AND C2.ContentItemCommonDataVersionStatus = 2
+)))
 ORDER BY NavigationOrder ASC, W.WebPageItemID ASC";
 
                 var ds = ConnectionHelper.ExecuteQuery(sql, null, QueryTypeEnum.SQLQuery);
                 if (ds != null && ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
                 {
-                    return BuildNavigationFromDataSet(ds.Tables[0], normalizedCurrent);
+                    return BuildNavigationFromDataSet(ds.Tables[0], normalizedCurrent, contentHubItems);
                 }
             }
             catch (Exception ex)
@@ -77,7 +89,7 @@ ORDER BY NavigationOrder ASC, W.WebPageItemID ASC";
             return await FallbackGetNavigationTreeAsync(normalizedCurrent);
         }
 
-        private List<NavigationItemViewModel> BuildNavigationFromDataSet(DataTable table, string normalizedCurrent)
+        private List<NavigationItemViewModel> BuildNavigationFromDataSet(DataTable table, string normalizedCurrent, List<NavigationItemViewModel>? contentHubItems = null)
         {
             var rows = new List<DataRow>();
             var seenIds = new HashSet<int>();
@@ -117,9 +129,9 @@ ORDER BY NavigationOrder ASC, W.WebPageItemID ASC";
 
             bool RowShowsInHeader(DataRow? r)
             {
-                if (r == null) return true;
+                if (r == null) return false;
                 var val = r["ShowInHeaderNavigation"];
-                if (val == null || val == DBNull.Value) return true;
+                if (val == null || val == DBNull.Value) return false;
                 return Convert.ToBoolean(val);
             }
 
@@ -128,6 +140,17 @@ ORDER BY NavigationOrder ASC, W.WebPageItemID ASC";
                 if (r == null) return fallback;
                 string custom = r["NavigationTitle"]?.ToString() ?? "";
                 if (!string.IsNullOrWhiteSpace(custom)) return custom.Trim();
+                
+                string displayName = r.Table.Columns.Contains("ContentItemLanguageMetadataDisplayName")
+                    ? r["ContentItemLanguageMetadataDisplayName"]?.ToString() ?? ""
+                    : "";
+                if (!string.IsNullOrWhiteSpace(displayName)) return CleanTitle(displayName, fallback);
+
+                string pageTitle = r.Table.Columns.Contains("PageTitle")
+                    ? r["PageTitle"]?.ToString() ?? ""
+                    : "";
+                if (!string.IsNullOrWhiteSpace(pageTitle)) return CleanTitle(pageTitle, fallback);
+
                 string name = r["WebPageItemName"]?.ToString() ?? fallback;
                 return CleanTitle(name, fallback);
             }
@@ -139,100 +162,240 @@ ORDER BY NavigationOrder ASC, W.WebPageItemID ASC";
                 return string.IsNullOrWhiteSpace(path) ? fallback : CleanUrl(path);
             }
 
+            var disabledKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // Record all explicitly disabled channel pages
+            foreach (var r in rows)
+            {
+                if (!RowShowsInHeader(r))
+                {
+                    var dTitle = RowTitle(r, "");
+                    var dNavTitle = r["NavigationTitle"]?.ToString() ?? "";
+                    var dPath = r["WebPageUrlPath"]?.ToString() ?? "";
+                    var dName = r["WebPageItemName"]?.ToString() ?? "";
+
+                    if (!string.IsNullOrWhiteSpace(dTitle)) disabledKeywords.Add(dTitle.Trim());
+                    if (!string.IsNullOrWhiteSpace(dNavTitle)) disabledKeywords.Add(dNavTitle.Trim());
+                    if (!string.IsNullOrWhiteSpace(dPath))
+                    {
+                        disabledKeywords.Add(dPath.Trim());
+                        disabledKeywords.Add(CleanUrl(dPath));
+                    }
+                    if (!string.IsNullOrWhiteSpace(dName)) disabledKeywords.Add(dName.Trim());
+                }
+            }
+
+            if (homeRow != null && !RowShowsInHeader(homeRow))
+            {
+                disabledKeywords.Add("Home");
+                disabledKeywords.Add("#section_1");
+                disabledKeywords.Add("/#section_1");
+            }
+            if (aboutRow != null && !RowShowsInHeader(aboutRow))
+            {
+                disabledKeywords.Add("About");
+                disabledKeywords.Add("#section_2");
+                disabledKeywords.Add("/#section_2");
+            }
+            if (membershipRow != null && !RowShowsInHeader(membershipRow))
+            {
+                disabledKeywords.Add("Membership");
+                disabledKeywords.Add("#section_3");
+                disabledKeywords.Add("/#section_3");
+            }
+            if (eventsNavRow != null && !RowShowsInHeader(eventsNavRow))
+            {
+                disabledKeywords.Add("Events");
+                disabledKeywords.Add("#section_4");
+                disabledKeywords.Add("/#section_4");
+            }
+            if (contactRow != null && !RowShowsInHeader(contactRow))
+            {
+                disabledKeywords.Add("Contact");
+                disabledKeywords.Add("Contact Us");
+                disabledKeywords.Add("#section_5");
+                disabledKeywords.Add("/#section_5");
+            }
+            if (listingRow != null && !RowShowsInHeader(listingRow))
+            {
+                disabledKeywords.Add("Event Listing");
+                disabledKeywords.Add("Listing");
+                disabledKeywords.Add("/listing-page");
+            }
+            if (detailRow != null && !RowShowsInHeader(detailRow))
+            {
+                disabledKeywords.Add("Event Detail");
+                disabledKeywords.Add("Detail");
+                disabledKeywords.Add("/detail-page");
+            }
+
             // 1. Home -> #section_1
-            if (homeRow == null || RowShowsInHeader(homeRow))
+            if (homeRow != null && RowShowsInHeader(homeRow))
             {
                 menuItems.Add(new NavigationItemViewModel
                 {
-                    WebPageItemId = homeRow != null ? Convert.ToInt32(homeRow["WebPageItemID"]) : 1,
+                    WebPageItemId = Convert.ToInt32(homeRow["WebPageItemID"]),
                     Title = RowTitle(homeRow, "Home"),
                     Url = sectionPrefix + "#section_1",
                     IsClickScroll = true,
-                    IsActive = isHomePage
+                    IsActive = isHomePage,
+                    Order = Convert.ToInt32(homeRow["NavigationOrder"])
+                });
+            }
+            else if (homeRow == null && !disabledKeywords.Contains("Home"))
+            {
+                menuItems.Add(new NavigationItemViewModel
+                {
+                    WebPageItemId = 1,
+                    Title = "Home",
+                    Url = sectionPrefix + "#section_1",
+                    IsClickScroll = true,
+                    IsActive = isHomePage,
+                    Order = 1
                 });
             }
 
             // 2. About -> #section_2
-            if (aboutRow == null || RowShowsInHeader(aboutRow))
+            if (aboutRow != null && RowShowsInHeader(aboutRow))
             {
                 menuItems.Add(new NavigationItemViewModel
                 {
-                    WebPageItemId = aboutRow != null ? Convert.ToInt32(aboutRow["WebPageItemID"]) : 2,
+                    WebPageItemId = Convert.ToInt32(aboutRow["WebPageItemID"]),
                     Title = RowTitle(aboutRow, "About"),
                     Url = sectionPrefix + "#section_2",
                     IsClickScroll = true,
-                    IsActive = false
+                    IsActive = false,
+                    Order = Convert.ToInt32(aboutRow["NavigationOrder"])
+                });
+            }
+            else if (aboutRow == null && !disabledKeywords.Contains("About"))
+            {
+                menuItems.Add(new NavigationItemViewModel
+                {
+                    WebPageItemId = 2,
+                    Title = "About",
+                    Url = sectionPrefix + "#section_2",
+                    IsClickScroll = true,
+                    IsActive = false,
+                    Order = 2
                 });
             }
 
             // 3. Membership -> #section_3
-            if (membershipRow == null || RowShowsInHeader(membershipRow))
+            if (membershipRow != null)
+            {
+                if (RowShowsInHeader(membershipRow))
+                {
+                    menuItems.Add(new NavigationItemViewModel
+                    {
+                        WebPageItemId = Convert.ToInt32(membershipRow["WebPageItemID"]),
+                        Title = RowTitle(membershipRow, "Membership"),
+                        Url = sectionPrefix + "#section_3",
+                        IsClickScroll = true,
+                        IsActive = false,
+                        Order = Convert.ToInt32(membershipRow["NavigationOrder"])
+                    });
+                }
+            }
+            else if (!disabledKeywords.Contains("Membership"))
             {
                 menuItems.Add(new NavigationItemViewModel
                 {
-                    WebPageItemId = membershipRow != null ? Convert.ToInt32(membershipRow["WebPageItemID"]) : 300,
-                    Title = RowTitle(membershipRow, "Membership"),
+                    WebPageItemId = 300,
+                    Title = "Membership",
                     Url = sectionPrefix + "#section_3",
                     IsClickScroll = true,
-                    IsActive = false
+                    IsActive = false,
+                    Order = 3
                 });
             }
 
             // 4. Events -> #section_4
-            if (eventsNavRow == null || RowShowsInHeader(eventsNavRow))
+            if (eventsNavRow != null)
+            {
+                if (RowShowsInHeader(eventsNavRow))
+                {
+                    menuItems.Add(new NavigationItemViewModel
+                    {
+                        WebPageItemId = Convert.ToInt32(eventsNavRow["WebPageItemID"]),
+                        Title = RowTitle(eventsNavRow, "Events"),
+                        Url = sectionPrefix + "#section_4",
+                        IsClickScroll = true,
+                        IsActive = false,
+                        Order = Convert.ToInt32(eventsNavRow["NavigationOrder"])
+                    });
+                }
+            }
+            else if (!disabledKeywords.Contains("Events"))
             {
                 menuItems.Add(new NavigationItemViewModel
                 {
-                    WebPageItemId = eventsNavRow != null ? Convert.ToInt32(eventsNavRow["WebPageItemID"]) : 400,
-                    Title = RowTitle(eventsNavRow, "Events"),
+                    WebPageItemId = 400,
+                    Title = "Events",
                     Url = sectionPrefix + "#section_4",
                     IsClickScroll = true,
-                    IsActive = false
+                    IsActive = false,
+                    Order = 4
                 });
             }
 
             // 5. Contact Us -> #section_5
-            if (contactRow == null || RowShowsInHeader(contactRow))
+            if (contactRow != null && RowShowsInHeader(contactRow))
             {
                 menuItems.Add(new NavigationItemViewModel
                 {
-                    WebPageItemId = contactRow != null ? Convert.ToInt32(contactRow["WebPageItemID"]) : 5,
+                    WebPageItemId = Convert.ToInt32(contactRow["WebPageItemID"]),
                     Title = RowTitle(contactRow, "Contact Us"),
                     Url = sectionPrefix + "#section_5",
                     IsClickScroll = true,
-                    IsActive = false
+                    IsActive = false,
+                    Order = Convert.ToInt32(contactRow["NavigationOrder"])
+                });
+            }
+            else if (contactRow == null && !disabledKeywords.Contains("Contact") && !disabledKeywords.Contains("Contact Us"))
+            {
+                menuItems.Add(new NavigationItemViewModel
+                {
+                    WebPageItemId = 5,
+                    Title = "Contact Us",
+                    Url = sectionPrefix + "#section_5",
+                    IsClickScroll = true,
+                    IsActive = false,
+                    Order = 5
                 });
             }
 
             // 6. Pages Dropdown (Event Listing & Event Detail)
-            var showListing = listingRow == null || RowShowsInHeader(listingRow);
-            var showDetail = detailRow == null || RowShowsInHeader(detailRow);
+            var showListing = listingRow != null ? RowShowsInHeader(listingRow) : !disabledKeywords.Contains("Event Listing");
+            var showDetail = detailRow != null ? RowShowsInHeader(detailRow) : !disabledKeywords.Contains("Event Detail");
 
             var listingUrl = RowUrl(listingRow, "/listing-page");
             var detailUrl = RowUrl(detailRow, "/detail-page");
 
             var children = new List<NavigationItemViewModel>();
-            if (showListing && listingRow != null)
+            if (showListing && (listingRow != null || !disabledKeywords.Contains("Event Listing")))
             {
                 children.Add(new NavigationItemViewModel
                 {
-                    WebPageItemId = Convert.ToInt32(listingRow["WebPageItemID"]),
-                    Title = RowTitle(listingRow, "Event Listing"),
+                    WebPageItemId = listingRow != null ? Convert.ToInt32(listingRow["WebPageItemID"]) : 101,
+                    Title = listingRow != null ? RowTitle(listingRow, "Event Listing") : "Event Listing",
                     Url = listingUrl,
                     IsClickScroll = false,
-                    IsActive = IsUrlActive(normalizedCurrent, listingUrl)
+                    IsActive = IsUrlActive(normalizedCurrent, listingUrl),
+                    Order = listingRow != null ? Convert.ToInt32(listingRow["NavigationOrder"]) : 1
                 });
             }
 
-            if (showDetail && detailRow != null)
+            if (showDetail && (detailRow != null || !disabledKeywords.Contains("Event Detail")))
             {
                 children.Add(new NavigationItemViewModel
                 {
-                    WebPageItemId = Convert.ToInt32(detailRow["WebPageItemID"]),
-                    Title = RowTitle(detailRow, "Event Detail"),
+                    WebPageItemId = detailRow != null ? Convert.ToInt32(detailRow["WebPageItemID"]) : 102,
+                    Title = detailRow != null ? RowTitle(detailRow, "Event Detail") : "Event Detail",
                     Url = detailUrl,
                     IsClickScroll = false,
-                    IsActive = IsUrlActive(normalizedCurrent, detailUrl)
+                    IsActive = IsUrlActive(normalizedCurrent, detailUrl),
+                    Order = detailRow != null ? Convert.ToInt32(detailRow["NavigationOrder"]) : 2
                 });
             }
 
@@ -244,21 +407,20 @@ ORDER BY NavigationOrder ASC, W.WebPageItemID ASC";
                     Title = "Pages",
                     Url = "#",
                     IsActive = children.Any(c => c.IsActive),
-                    Children = children
+                    Children = children,
+                    Order = 6
                 });
             }
 
-            // 7. Any other dynamically added pages in the website channel (e.g. Testing, Blog, Gallery, etc.)
+            // 7. Dynamic pages created in the channel (e.g. Testing, Blog, etc.)
             var knownIds = new HashSet<int>();
-
-            // Exclude the specific standard template pages already mapped above
             if (homeRow != null) knownIds.Add(Convert.ToInt32(homeRow["WebPageItemID"]));
             if (aboutRow != null) knownIds.Add(Convert.ToInt32(aboutRow["WebPageItemID"]));
             if (contactRow != null) knownIds.Add(Convert.ToInt32(contactRow["WebPageItemID"]));
             if (listingRow != null) knownIds.Add(Convert.ToInt32(listingRow["WebPageItemID"]));
             if (detailRow != null) knownIds.Add(Convert.ToInt32(detailRow["WebPageItemID"]));
 
-            // Also exclude legacy duplicate seeded items by path or name
+            // Legacy seeded items exclusion
             foreach (var r in rows)
             {
                 var name = r["WebPageItemName"]?.ToString() ?? "";
@@ -284,24 +446,53 @@ ORDER BY NavigationOrder ASC, W.WebPageItemID ASC";
 
             var otherRows = rows
                 .Where(r => !knownIds.Contains(Convert.ToInt32(r["WebPageItemID"])))
-                .Where(RowShowsInHeader)
+                .Where(RowShowsInHeader) // STRICT ENABLE/DISABLE CHECK!
                 .OrderBy(r => Convert.ToInt32(r["NavigationOrder"]))
                 .ToList();
 
             foreach (var extraRow in otherRows)
             {
                 var extraUrl = RowUrl(extraRow, "/");
+                var itemTitle = RowTitle(extraRow, extraRow["WebPageItemName"]?.ToString() ?? "Page");
                 menuItems.Add(new NavigationItemViewModel
                 {
                     WebPageItemId = Convert.ToInt32(extraRow["WebPageItemID"]),
-                    Title = RowTitle(extraRow, extraRow["WebPageItemName"]?.ToString() ?? "Page"),
+                    Title = itemTitle,
                     Url = extraUrl,
                     IsClickScroll = false,
-                    IsActive = IsUrlActive(normalizedCurrent, extraUrl)
+                    IsActive = IsUrlActive(normalizedCurrent, extraUrl),
+                    Order = Convert.ToInt32(extraRow["NavigationOrder"])
                 });
             }
 
-            return menuItems;
+            // 8. If Content Hub navigation items exist that are not yet in the menu, include them
+            if (contentHubItems != null && contentHubItems.Any())
+            {
+                foreach (var chItem in contentHubItems)
+                {
+                    // If this title or URL was explicitly disabled by an editor, DO NOT RE-ADD IT!
+                    if (disabledKeywords.Contains(chItem.Title) || disabledKeywords.Contains(chItem.Url) || disabledKeywords.Contains(CleanUrl(chItem.Url)))
+                    {
+                        continue;
+                    }
+
+                    if (!menuItems.Any(m => m.Title.Equals(chItem.Title, StringComparison.OrdinalIgnoreCase) ||
+                                            m.Url.Equals(chItem.Url, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        menuItems.Add(new NavigationItemViewModel
+                        {
+                            WebPageItemId = chItem.WebPageItemId,
+                            Title = chItem.Title,
+                            Url = chItem.Url,
+                            IsClickScroll = chItem.IsClickScroll,
+                            IsActive = IsUrlActive(normalizedCurrent, chItem.Url),
+                            Order = chItem.Order > 0 ? chItem.Order : 50
+                        });
+                    }
+                }
+            }
+
+            return menuItems.OrderBy(m => m.Order).ToList();
         }
 
         private async Task<List<NavigationItemViewModel>> FallbackGetNavigationTreeAsync(string normalizedCurrent)

@@ -6,7 +6,7 @@
 
             <div class="col-lg-6 col-12 me-auto mb-5 mb-lg-0">
                 <a class="navbar-brand d-flex align-items-center" href="/">
-                    <img src="/images/logo.png" class="navbar-brand-image img-fluid" alt="@Model.BrandTitle @Model.BrandSubtitle">
+                    <img src="@Model.BrandLogoUrl" class="navbar-brand-image img-fluid" alt="@Model.BrandTitle @Model.BrandSubtitle">
                     <span class="navbar-brand-text">
                         @Model.BrandTitle
                         <small>@Model.BrandSubtitle</small>
@@ -15,18 +15,31 @@
                 <p class="text-white mt-3" style="max-width: 450px;">
                     @Model.Description
                 </p>
+                @if (!string.IsNullOrEmpty(Model.PhoneNumber) || !string.IsNullOrEmpty(Model.EmailAddress))
+                {
+                    <p class="text-white mb-1">
+                        @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                        {
+                            <span class="me-3"><i class="bi-telephone me-1"></i> <a href="tel:@Model.PhoneNumber" class="text-white text-decoration-none">@Model.PhoneNumber</a></span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.EmailAddress))
+                        {
+                            <span><i class="bi-envelope me-1"></i> <a href="mailto:@Model.EmailAddress" class="text-white text-decoration-none">@Model.EmailAddress</a></span>
+                        }
+                    </p>
+                }
             </div>
 
             <div class="col-lg-3 col-12">
-                <h5 class="site-footer-title mb-4">Join Us</h5>
+                <h5 class="site-footer-title mb-4">@Model.ScheduleTitle</h5>
 
                 <p class="d-flex border-bottom pb-3 mb-3 me-lg-3">
-                    <span class="fw-bold me-2">Mon-Fri</span>
+                    <span class="fw-bold me-2">@Model.WeekdayLabel</span>
                     @Model.WeekdayHours
                 </p>
 
                 <p class="d-flex me-lg-3">
-                    <span class="fw-bold me-2">Sat-Sun</span>
+                    <span class="fw-bold me-2">@Model.WeekendLabel</span>
                     @Model.WeekendHours
                 </p>
                 <br>
@@ -35,17 +48,40 @@
 
             <div class="col-lg-2 col-12 ms-auto">
                 <ul class="social-icon mt-lg-5 mt-3 mb-4 list-unstyled d-flex gap-2">
-                    <li class="social-icon-item">
-                        <a href="@Model.InstagramUrl" class="social-icon-link bi-instagram" target="_blank" rel="noopener"></a>
-                    </li>
+                    @if (!string.IsNullOrEmpty(Model.InstagramUrl))
+                    {
+                        <li class="social-icon-item">
+                            <a href="@Model.InstagramUrl" class="social-icon-link bi-instagram" target="_blank" rel="noopener"></a>
+                        </li>
+                    }
 
-                    <li class="social-icon-item">
-                        <a href="@Model.TwitterUrl" class="social-icon-link bi-twitter" target="_blank" rel="noopener"></a>
-                    </li>
+                    @if (!string.IsNullOrEmpty(Model.TwitterUrl))
+                    {
+                        <li class="social-icon-item">
+                            <a href="@Model.TwitterUrl" class="social-icon-link bi-twitter" target="_blank" rel="noopener"></a>
+                        </li>
+                    }
 
-                    <li class="social-icon-item">
-                        <a href="@Model.WhatsAppUrl" class="social-icon-link bi-whatsapp" target="_blank" rel="noopener"></a>
-                    </li>
+                    @if (!string.IsNullOrEmpty(Model.WhatsAppUrl))
+                    {
+                        <li class="social-icon-item">
+                            <a href="@Model.WhatsAppUrl" class="social-icon-link bi-whatsapp" target="_blank" rel="noopener"></a>
+                        </li>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.FacebookUrl))
+                    {
+                        <li class="social-icon-item">
+                            <a href="@Model.FacebookUrl" class="social-icon-link bi-facebook" target="_blank" rel="noopener"></a>
+                        </li>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.LinkedInUrl))
+                    {
+                        <li class="social-icon-item">
+                            <a href="@Model.LinkedInUrl" class="social-icon-link bi-linkedin" target="_blank" rel="noopener"></a>
+                        </li>
+                    }
                 </ul>
                 <p class="copyright-text">Design: <a rel="nofollow" href="@Model.DesignerUrl" target="_blank">@Model.DesignerCredit</a></p>
             </div>

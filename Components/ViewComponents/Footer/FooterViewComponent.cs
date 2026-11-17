@@ -28,24 +28,23 @@ namespace Podcast.Web.Components.ViewComponents.Footer
                 FooterItems = menuItems,
                 BrandTitle = footerConfig.BrandTitle,
                 BrandSubtitle = footerConfig.BrandSubtitle,
+                BrandLogoUrl = !string.IsNullOrWhiteSpace(footerConfig.BrandLogoUrl) ? footerConfig.BrandLogoUrl : "/images/logo.png",
                 Description = footerConfig.Description,
+                ScheduleTitle = !string.IsNullOrWhiteSpace(footerConfig.ScheduleTitle) ? footerConfig.ScheduleTitle : "Join Us",
+                WeekdayLabel = !string.IsNullOrWhiteSpace(footerConfig.WeekdayLabel) ? footerConfig.WeekdayLabel : "Mon-Fri",
                 WeekdayHours = footerConfig.WeekdayHours,
+                WeekendLabel = !string.IsNullOrWhiteSpace(footerConfig.WeekendLabel) ? footerConfig.WeekendLabel : "Sat-Sun",
                 WeekendHours = footerConfig.WeekendHours,
                 CopyrightText = footerConfig.CopyrightText,
                 DesignerCredit = footerConfig.DesignerCredit,
                 DesignerUrl = footerConfig.DesignerUrl,
-                SubscribeTitle = "Subscribe to our Newsletter",
-                SubscribePlaceholder = "Enter your email address",
-                SubscribeButtonText = "Subscribe",
-                PhoneNumber = "(020) 010-020-0340",
-                EmailAddress = "info@company.com",
-                DownloadTitle = "Download Mobile App",
-                AppStoreUrl = "#",
-                PlayStoreUrl = "#",
-                SocialTitle = "Social",
+                PhoneNumber = footerConfig.PhoneNumber,
+                EmailAddress = footerConfig.EmailAddress,
                 InstagramUrl = footerConfig.InstagramUrl,
                 TwitterUrl = footerConfig.TwitterUrl,
-                WhatsAppUrl = footerConfig.WhatsAppUrl
+                WhatsAppUrl = footerConfig.WhatsAppUrl,
+                FacebookUrl = footerConfig.FacebookUrl,
+                LinkedInUrl = footerConfig.LinkedInUrl
             };
 
             return View("~/Components/ViewComponents/Footer/_Footer.cshtml", model);

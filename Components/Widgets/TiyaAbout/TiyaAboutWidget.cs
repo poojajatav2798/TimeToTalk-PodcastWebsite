@@ -12,7 +12,7 @@ using System.Threading.Tasks;
     viewComponentType: typeof(TiyaAboutWidgetViewComponent),
     name: "Tiya About & History",
     propertiesType: typeof(TiyaAboutProperties),
-    Description = "Tiya Golf Club history and founder/co-founder leadership team cards fetched dynamically from Kentico Content Hub",
+    Description = "Tiya Golf Club history and leadership team cards fetched dynamically from Kentico Content Hub",
     IconClass = "xp-users")]
 
 [assembly: RegisterWidget(
@@ -20,7 +20,7 @@ using System.Threading.Tasks;
     viewComponentType: typeof(TiyaAboutWidgetViewComponent),
     name: "Tiya About & History (Legacy Alias)",
     propertiesType: typeof(TiyaAboutProperties),
-    Description = "Tiya Golf Club history and founder/co-founder leadership team cards fetched dynamically from Kentico Content Hub",
+    Description = "Tiya Golf Club history and leadership team cards fetched dynamically from Kentico Content Hub",
     IconClass = "xp-users")]
 
 namespace Podcast.Web.Components.Widgets.TiyaAbout
@@ -45,38 +45,37 @@ namespace Podcast.Web.Components.Widgets.TiyaAbout
         public async Task<IViewComponentResult> InvokeAsync(ComponentViewModel<TiyaAboutProperties> widgetModel)
         {
             var properties = widgetModel.Properties;
-            var team = await _contentRepo.GetTeamMembersAsync();
 
-            var historyBlock = await _contentRepo.GetContentBlockAsync("tiya-history-block");
-            if (historyBlock != null)
+            // 1. Load History text from Content Hub block if available
+            TimeToTalk.WebsiteContentBlock? historyBlock = null;
+            if (properties.SelectedHistoryBlock != null && properties.SelectedHistoryBlock.Any())
             {
-                if (!string.IsNullOrWhiteSpace(historyBlock.Heading)) properties.HistoryHeading = historyBlock.Heading;
-                if (!string.IsNullOrWhiteSpace(historyBlock.Description)) properties.HistoryParagraph1 = historyBlock.Description;
-                if (!string.IsNullOrWhiteSpace(historyBlock.PrimaryButtonURL)) properties.HistoryParagraph2 = historyBlock.PrimaryButtonURL;
-                if (!string.IsNullOrWhiteSpace(historyBlock.PrimaryButtonText)) properties.SectionTitle = historyBlock.PrimaryButtonText;
+                var blockGuid = properties.SelectedHistoryBlock.First().Identifier;
+                historyBlock = await _contentRepo.GetContentBlockByGuidAsync(blockGuid);
+            }
+            if (historyBlock == null)
+            {
+                historyBlock = await _contentRepo.GetContentBlockAsync("tiya-history-block");
             }
 
-            if (team.Any())
+            if (historyBlock != null)
             {
-                var m1 = team.ElementAtOrDefault(0);
-                if (m1 != null)
-                {
-                    if (!string.IsNullOrWhiteSpace(m1.Name)) properties.Member1Name = m1.Name;
-                    if (!string.IsNullOrWhiteSpace(m1.Role)) properties.Member1Role = m1.Role;
-                    if (!string.IsNullOrWhiteSpace(m1.ImageUrl)) properties.Member1ImageUrl = m1.ImageUrl;
-                    if (!string.IsNullOrWhiteSpace(m1.TwitterUrl)) properties.Member1TwitterUrl = m1.TwitterUrl;
-                    if (!string.IsNullOrWhiteSpace(m1.WhatsAppUrl)) properties.Member1WhatsAppUrl = m1.WhatsAppUrl;
-                }
+                if (!string.IsNullOrWhiteSpace(historyBlock.Heading)) properties.HistoryHeading = historyBlock.Heading.Trim();
+                if (!string.IsNullOrWhiteSpace(historyBlock.Description)) properties.HistoryParagraph1 = historyBlock.Description.Trim();
+                if (!string.IsNullOrWhiteSpace(historyBlock.PrimaryButtonURL)) properties.HistoryParagraph2 = historyBlock.PrimaryButtonURL.Trim();
+                if (!string.IsNullOrWhiteSpace(historyBlock.PrimaryButtonText)) properties.SectionTitle = historyBlock.PrimaryButtonText.Trim();
+            }
 
-                var m2 = team.ElementAtOrDefault(1);
-                if (m2 != null)
-                {
-                    if (!string.IsNullOrWhiteSpace(m2.Name)) properties.Member2Name = m2.Name;
-                    if (!string.IsNullOrWhiteSpace(m2.Role)) properties.Member2Role = m2.Role;
-                    if (!string.IsNullOrWhiteSpace(m2.ImageUrl)) properties.Member2ImageUrl = m2.ImageUrl;
-                    if (!string.IsNullOrWhiteSpace(m2.LinkedInUrl)) properties.Member2LinkedInUrl = m2.LinkedInUrl;
-                    if (!string.IsNullOrWhiteSpace(m2.TwitterUrl)) properties.Member2TwitterUrl = m2.TwitterUrl;
-                }
+            // 2. Load Team Members: either from ContentItemSelectorComponent or all from Content Hub
+            List<TeamMemberModel> team;
+            if (properties.SelectedCards != null && properties.SelectedCards.Any())
+            {
+                var cardGuids = properties.SelectedCards.Select(c => c.Identifier);
+                team = await _contentRepo.GetTeamMembersByGuidsAsync(cardGuids);
+            }
+            else
+            {
+                team = await _contentRepo.GetTeamMembersAsync();
             }
 
             var model = new TiyaAboutViewModel

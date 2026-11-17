@@ -392,9 +392,11 @@ namespace Podcast.Web.Controllers
                         { nameof(WebsiteContentBlock.BlockName), "tiya-footer-config" },
                         { nameof(WebsiteContentBlock.Heading), "Copyright © 2048 Tiya Golf Club" },
                         { nameof(WebsiteContentBlock.Description), "Since 1984, Tiya is ranked #8 in the top 10 golf courses in the world. Modern, creative and lifestyle golf community." },
-                        { nameof(WebsiteContentBlock.IconName), "6:00 AM - 6:00 PM|6:30 AM - 8:30 PM" },
+                        { nameof(WebsiteContentBlock.IconName), "Join Us|Mon-Fri|6:00 AM - 6:00 PM|Sat-Sun|6:30 AM - 8:30 PM" },
                         { nameof(WebsiteContentBlock.PrimaryButtonText), "TemplateMo" },
-                        { nameof(WebsiteContentBlock.PrimaryButtonURL), "https://instagram.com|https://twitter.com|https://whatsapp.com" },
+                        { nameof(WebsiteContentBlock.PrimaryButtonURL), "https://instagram.com|https://twitter.com|https://whatsapp.com||" },
+                        { nameof(WebsiteContentBlock.SecondaryButtonText), "(020) 010-020-0340" },
+                        { nameof(WebsiteContentBlock.SecondaryButtonURL), "info@company.com|/images/logo.png|https://templatemo.com" },
                         { nameof(WebsiteContentBlock.BlockType), "FooterConfig" },
                         { nameof(WebsiteContentBlock.IsActive), true }
                     },
@@ -411,8 +413,10 @@ namespace Podcast.Web.Controllers
                         { nameof(WebsiteContentBlock.Heading), "Tiya Golf Club" },
                         { nameof(WebsiteContentBlock.Description), "Modern, Creative, Lifestyle" },
                         { nameof(WebsiteContentBlock.PrimaryButtonText), "Our Story" },
-                        { nameof(WebsiteContentBlock.PrimaryButtonURL), "https://www.youtube.com/embed/MGNgbAGK6s8?si=Z6Wpbg4e88P-5k5s" },
-                        { nameof(WebsiteContentBlock.IconName), "Become a member" },
+                        { nameof(WebsiteContentBlock.PrimaryButtonURL), "#section_2" },
+                        { nameof(WebsiteContentBlock.SecondaryButtonText), "Become a member" },
+                        { nameof(WebsiteContentBlock.SecondaryButtonURL), "#section_3" },
+                        { nameof(WebsiteContentBlock.IconName), "Welcome to the Club|is|https://www.youtube.com/embed/MGNgbAGK6s8" },
                         { nameof(WebsiteContentBlock.BlockType), "HeroBanner" },
                         { nameof(WebsiteContentBlock.IsActive), true }
                     },
@@ -498,6 +502,100 @@ namespace Podcast.Web.Controllers
                         { nameof(WebsiteContentBlock.IsActive), true }
                     },
                     sharedFolderId);
+
+                // 5.8b Membership Form Dynamic Fields Configuration
+                await CreateAndPublishItem(
+                    WebsiteContentBlock.CONTENT_TYPE_NAME,
+                    "membership-form-fields",
+                    "Membership Form Fields",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(WebsiteContentBlock.BlockName), "membership-form-fields" },
+                        { nameof(WebsiteContentBlock.Heading), "Membership Form Configuration" },
+                        { nameof(WebsiteContentBlock.Description), "fullName|Full Name|text|Full Name|1\r\nemail|Email address|email|Email address|1\r\nphone|Phone Number|phone|010-020-0340|0\r\ntier|Membership Tier|dropdown|Select Plan|0|Standard Access ($600),Country Club Pro ($850),Platinum Masters ($1,100)\r\ncomments|Comments|textarea|Describe message here|0" },
+                        { nameof(WebsiteContentBlock.BlockType), "MembershipConfig" },
+                        { nameof(WebsiteContentBlock.IsActive), true }
+                    },
+                    sharedFolderId);
+
+                // 5.9 Content Hub Dynamic Navigation Items (Navigation Folder)
+                logs.Add("--- Seeding Dynamic Navigation Items in Navigation folder ---");
+                int navFolderId = await EnsureFolder("Navigation", "Navigation");
+
+                await CreateAndPublishItem(
+                    WebsiteContentBlock.CONTENT_TYPE_NAME,
+                    "nav-home",
+                    "Home",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(WebsiteContentBlock.BlockName), "nav-home" },
+                        { nameof(WebsiteContentBlock.Heading), "Home" },
+                        { nameof(WebsiteContentBlock.PrimaryButtonURL), "/#section_1" },
+                        { nameof(WebsiteContentBlock.BlockType), "NavigationItem" },
+                        { nameof(WebsiteContentBlock.DisplayOrder), 1 },
+                        { nameof(WebsiteContentBlock.IsActive), true }
+                    },
+                    navFolderId);
+
+                await CreateAndPublishItem(
+                    WebsiteContentBlock.CONTENT_TYPE_NAME,
+                    "nav-about",
+                    "About",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(WebsiteContentBlock.BlockName), "nav-about" },
+                        { nameof(WebsiteContentBlock.Heading), "About" },
+                        { nameof(WebsiteContentBlock.PrimaryButtonURL), "/#section_2" },
+                        { nameof(WebsiteContentBlock.BlockType), "NavigationItem" },
+                        { nameof(WebsiteContentBlock.DisplayOrder), 2 },
+                        { nameof(WebsiteContentBlock.IsActive), true }
+                    },
+                    navFolderId);
+
+                await CreateAndPublishItem(
+                    WebsiteContentBlock.CONTENT_TYPE_NAME,
+                    "nav-membership",
+                    "Membership",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(WebsiteContentBlock.BlockName), "nav-membership" },
+                        { nameof(WebsiteContentBlock.Heading), "Membership" },
+                        { nameof(WebsiteContentBlock.PrimaryButtonURL), "/#section_3" },
+                        { nameof(WebsiteContentBlock.BlockType), "NavigationItem" },
+                        { nameof(WebsiteContentBlock.DisplayOrder), 3 },
+                        { nameof(WebsiteContentBlock.IsActive), true }
+                    },
+                    navFolderId);
+
+                await CreateAndPublishItem(
+                    WebsiteContentBlock.CONTENT_TYPE_NAME,
+                    "nav-events",
+                    "Events",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(WebsiteContentBlock.BlockName), "nav-events" },
+                        { nameof(WebsiteContentBlock.Heading), "Events" },
+                        { nameof(WebsiteContentBlock.PrimaryButtonURL), "/#section_4" },
+                        { nameof(WebsiteContentBlock.BlockType), "NavigationItem" },
+                        { nameof(WebsiteContentBlock.DisplayOrder), 4 },
+                        { nameof(WebsiteContentBlock.IsActive), true }
+                    },
+                    navFolderId);
+
+                await CreateAndPublishItem(
+                    WebsiteContentBlock.CONTENT_TYPE_NAME,
+                    "nav-contact",
+                    "Contact Us",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(WebsiteContentBlock.BlockName), "nav-contact" },
+                        { nameof(WebsiteContentBlock.Heading), "Contact Us" },
+                        { nameof(WebsiteContentBlock.PrimaryButtonURL), "/#section_5" },
+                        { nameof(WebsiteContentBlock.BlockType), "NavigationItem" },
+                        { nameof(WebsiteContentBlock.DisplayOrder), 5 },
+                        { nameof(WebsiteContentBlock.IsActive), true }
+                    },
+                    navFolderId);
 
                 // 6. ASSIGN TEMPLATES AND WIDGETS
                 logs.Add("--- Assigning Page Templates & Widgets from Content Hub Saved Data ---");
@@ -643,7 +741,7 @@ namespace Podcast.Web.Controllers
                             button1Link = "#section_2",
                             button2Text = heroBlock?.IconName ?? "Become a member",
                             button2Link = "#section_3",
-                            videoUrl = heroBlock?.PrimaryButtonURL ?? "https://www.youtube.com/embed/MGNgbAGK6s8?si=Z6Wpbg4e88P-5k5s"
+                            videoUrl = "https://www.youtube.com/embed/MGNgbAGK6s8"
                         }),
                         CreateArea("about-area", "TiyaGolf.TiyaAboutWidget", new
                         {
@@ -688,6 +786,12 @@ namespace Podcast.Web.Controllers
                             heroTitle = listingBlock?.PrimaryButtonText ?? "Event Listing",
                             sectionTitle = listingBlock?.Heading ?? "Upcoming Golf Events",
                             eventsPerPage = 4
+                        }),
+                        CreateArea("listing-area", "TiyaGolf.TiyaEventListingWidget", new
+                        {
+                            heroTitle = listingBlock?.PrimaryButtonText ?? "Event Listing",
+                            sectionTitle = listingBlock?.Heading ?? "Upcoming Golf Events",
+                            eventsPerPage = 4
                         })
                     }
                 };
@@ -698,6 +802,14 @@ namespace Podcast.Web.Controllers
                     editableAreas = new[]
                     {
                         CreateArea("main-area", "TiyaGolf.TiyaEventDetailWidget", new
+                        {
+                            heroTitle = detailBlock?.PrimaryButtonText ?? "Event Detail",
+                            eventTitle = featuredEvent?.Title ?? detailBlock?.Heading ?? "Championship Tournament",
+                            subtitle = featuredEvent?.Category ?? "VIP / Private",
+                            location = featuredEvent?.Location ?? "National Center, NYC",
+                            ticketPrice = featuredEvent?.TicketPrice ?? "$250"
+                        }),
+                        CreateArea("detail-area", "TiyaGolf.TiyaEventDetailWidget", new
                         {
                             heroTitle = detailBlock?.PrimaryButtonText ?? "Event Detail",
                             eventTitle = featuredEvent?.Title ?? detailBlock?.Heading ?? "Championship Tournament",
@@ -723,7 +835,7 @@ namespace Podcast.Web.Controllers
                           FROM CMS_ContentItemCommonData C
                           JOIN CMS_ContentItem CI ON C.ContentItemCommonDataContentItemID = CI.ContentItemID
                           JOIN CMS_Class CT ON CI.ContentItemContentTypeID = CT.ClassID
-                          WHERE CT.ClassName = '{pageClassName}' AND C.ContentItemCommonDataIsLatest = 1",
+                          WHERE CT.ClassName = '{pageClassName}' AND (C.ContentItemCommonDataIsLatest = 1 OR C.ContentItemCommonDataVersionStatus = 2)",
                         null,
                         QueryTypeEnum.SQLQuery);
                     logs.Add($"Saved widgets for page type '{pageClassName}' from dynamic Content Hub data");

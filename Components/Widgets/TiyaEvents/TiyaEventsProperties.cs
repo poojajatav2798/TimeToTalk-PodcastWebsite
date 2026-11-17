@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using CMS.ContentEngine;
 using Kentico.PageBuilder.Web.Mvc;
 using Kentico.Xperience.Admin.Base.FormAnnotations;
 
@@ -13,5 +16,8 @@ namespace Podcast.Web.Components.Widgets.TiyaEvents
 
         [NumberInputComponent(Label = "Events Per Page", Order = 3)]
         public int EventsPerPage { get; set; } = 2;
+
+        [ContentItemSelectorComponent("TimeToTalk.PodcastEpisode", Label = "Select Specific Events (Content Hub)", Order = 4)]
+        public IEnumerable<ContentItemReference> SelectedEvents { get; set; } = Enumerable.Empty<ContentItemReference>();
     }
 }
