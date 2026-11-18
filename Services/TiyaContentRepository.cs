@@ -369,15 +369,7 @@ namespace Podcast.Web.Services
                 {
                     foreach (var b in blocks.OrderBy(x => x.DisplayOrder))
                     {
-                        tiers.Add(new MembershipTierModel
-                        {
-                            Id = b.SystemFields.ContentItemID,
-                            TierCode = b.IconName ?? "T1",
-                            Name = b.Heading ?? "Tier",
-                            Price = b.PrimaryButtonText ?? "$250",
-                            Description = b.Description ?? "",
-                            Order = b.DisplayOrder
-                        });
+                        tiers.Add(MapBlockToTier(b));
                     }
                 }
             }
@@ -404,6 +396,41 @@ namespace Podcast.Web.Services
             return tiers;
         }
 
+        public async Task<List<MembershipTierModel>> GetMembershipTiersByGuidsAsync(IEnumerable<Guid> guids)
+        {
+            var list = new List<MembershipTierModel>();
+            var guidList = guids?.ToList() ?? new List<Guid>();
+            if (!guidList.Any()) return list;
+
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(WebsiteContentBlock.CONTENT_TYPE_NAME, q =>
+                    {
+                        q.Where(w => w.WhereIn(nameof(IContentItemFieldsSource.SystemFields.ContentItemGUID), guidList));
+                    });
+
+                var blocks = await _queryExecutor.GetMappedResult<WebsiteContentBlock>(builder);
+                if (blocks != null)
+                {
+                    var blockDict = blocks.ToDictionary(b => b.SystemFields.ContentItemGUID);
+                    foreach (var g in guidList)
+                    {
+                        if (blockDict.TryGetValue(g, out var b))
+                        {
+                            list.Add(MapBlockToTier(b));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to query membership tiers by GUIDs from Content Hub.");
+            }
+
+            return list;
+        }
+
         public async Task<List<MembershipFeatureRowModel>> GetMembershipFeaturesAsync()
         {
             var features = new List<MembershipFeatureRowModel>();
@@ -418,19 +445,7 @@ namespace Podcast.Web.Services
                 {
                     foreach (var b in blocks.OrderBy(x => x.DisplayOrder))
                     {
-                        var flags = (b.PrimaryButtonURL ?? "1,1,1").Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
-                        var availList = new List<bool>();
-                        foreach (var f in flags)
-                        {
-                            var trimmed = f.Trim();
-                            availList.Add(trimmed == "1" || trimmed.Equals("true", StringComparison.OrdinalIgnoreCase) || trimmed.Equals("yes", StringComparison.OrdinalIgnoreCase));
-                        }
-
-                        features.Add(new MembershipFeatureRowModel
-                        {
-                            FeatureName = b.Heading ?? "Feature",
-                            TierAvailabilityList = availList
-                        });
+                        features.Add(MapBlockToFeature(b));
                     }
                 }
             }
@@ -439,12 +454,94 @@ namespace Podcast.Web.Services
                 _logger.LogWarning(ex, "Failed to query membership features from Content Hub.");
             }
 
+            var folderIds = GetFolderItemIds(FOLDER_MEMBERSHIPS);
+            if (folderIds.Any())
+            {
+                var folderFeatures = features.Where(f => folderIds.Contains(f.Id)).ToList();
+                if (folderFeatures.Any())
+                {
+                    features = folderFeatures;
+                }
+            }
+
             if (!features.Any())
             {
                 features = GetInitialMembershipFeatures();
             }
 
             return features;
+        }
+
+        public async Task<List<MembershipFeatureRowModel>> GetMembershipFeaturesByGuidsAsync(IEnumerable<Guid> guids)
+        {
+            var list = new List<MembershipFeatureRowModel>();
+            var guidList = guids?.ToList() ?? new List<Guid>();
+            if (!guidList.Any()) return list;
+
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(WebsiteContentBlock.CONTENT_TYPE_NAME, q =>
+                    {
+                        q.Where(w => w.WhereIn(nameof(IContentItemFieldsSource.SystemFields.ContentItemGUID), guidList));
+                    });
+
+                var blocks = await _queryExecutor.GetMappedResult<WebsiteContentBlock>(builder);
+                if (blocks != null)
+                {
+                    var blockDict = blocks.ToDictionary(b => b.SystemFields.ContentItemGUID);
+                    foreach (var g in guidList)
+                    {
+                        if (blockDict.TryGetValue(g, out var b))
+                        {
+                            list.Add(MapBlockToFeature(b));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to query membership features by GUIDs from Content Hub.");
+            }
+
+            return list;
+        }
+
+        private static MembershipTierModel MapBlockToTier(WebsiteContentBlock b)
+        {
+            var price = !string.IsNullOrWhiteSpace(b.PrimaryButtonText) ? b.PrimaryButtonText.Trim() : "$250";
+            var tierCode = !string.IsNullOrWhiteSpace(b.IconName) ? b.IconName.Trim() : "T1";
+            var name = !string.IsNullOrWhiteSpace(b.Heading) ? b.Heading.Trim() : (b.BlockName ?? "Tier");
+
+            return new MembershipTierModel
+            {
+                Id = b.SystemFields.ContentItemID,
+                TierCode = tierCode,
+                Name = name,
+                Price = price,
+                Description = b.Description ?? "",
+                Order = b.DisplayOrder
+            };
+        }
+
+        private static MembershipFeatureRowModel MapBlockToFeature(WebsiteContentBlock b)
+        {
+            var raw = b.PrimaryButtonURL ?? b.Description ?? "1,1,1";
+            var flags = raw.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            var availList = new List<bool>();
+            foreach (var f in flags)
+            {
+                var trimmed = f.Trim();
+                availList.Add(trimmed == "1" || trimmed.Equals("true", StringComparison.OrdinalIgnoreCase) || trimmed.Equals("yes", StringComparison.OrdinalIgnoreCase));
+            }
+
+            return new MembershipFeatureRowModel
+            {
+                Id = b.SystemFields.ContentItemID,
+                FeatureName = !string.IsNullOrWhiteSpace(b.Heading) ? b.Heading.Trim() : (b.BlockName ?? "Feature"),
+                RawFlags = raw,
+                TierAvailabilityList = availList
+            };
         }
 
         public async Task<List<FormFieldModel>> GetMembershipFormFieldsAsync()

@@ -17,22 +17,28 @@ namespace Podcast.Web.Components.Widgets.TiyaMembership
         [TextInputComponent(Label = "Billing Cycle Heading", Order = 3)]
         public string CycleHeading { get; set; } = "Yearly Access";
 
-        [TextInputComponent(Label = "T1 Price (fallback)", Order = 4)]
-        public string T1Price { get; set; } = "T1 $420";
+        [ContentItemSelectorComponent("TimeToTalk.WebsiteContentBlock", Label = "Select Membership Plans / Tiers (Columns in Order)", Order = 4)]
+        public IEnumerable<ContentItemReference> SelectedTiers { get; set; } = Enumerable.Empty<ContentItemReference>();
 
-        [TextInputComponent(Label = "T2 Price (fallback)", Order = 5)]
-        public string T2Price { get; set; } = "T2 $640";
+        [ContentItemSelectorComponent("TimeToTalk.WebsiteContentBlock", Label = "Select Membership Features (Rows in Order)", Order = 5)]
+        public IEnumerable<ContentItemReference> SelectedFeatures { get; set; } = Enumerable.Empty<ContentItemReference>();
 
-        [TextInputComponent(Label = "T3 Price (fallback)", Order = 6)]
-        public string T3Price { get; set; } = "T3 $860";
-
-        [TextInputComponent(Label = "Form Subheading", Order = 7)]
+        [TextInputComponent(Label = "Form Subheading", Order = 6)]
         public string FormSubheading { get; set; } = "Please join us!";
 
-        [TextInputComponent(Label = "Form Title", Order = 8)]
+        [TextInputComponent(Label = "Form Title", Order = 7)]
         public string FormTitle { get; set; } = "Become a member";
 
-        [ContentItemSelectorComponent("TimeToTalk.WebsiteContentBlock", Label = "Select Specific Membership Items (Content Hub)", Order = 9)]
+        [TextInputComponent(Label = "T1 Price (fallback)", Order = 8)]
+        public string T1Price { get; set; } = "T1 $420";
+
+        [TextInputComponent(Label = "T2 Price (fallback)", Order = 9)]
+        public string T2Price { get; set; } = "T2 $640";
+
+        [TextInputComponent(Label = "T3 Price (fallback)", Order = 10)]
+        public string T3Price { get; set; } = "T3 $860";
+
+        [ContentItemSelectorComponent("TimeToTalk.WebsiteContentBlock", Label = "All Membership Items (Legacy Selector)", Order = 11)]
         public IEnumerable<ContentItemReference> SelectedItems { get; set; } = Enumerable.Empty<ContentItemReference>();
     }
 }

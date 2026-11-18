@@ -28,7 +28,7 @@
                                     foreach (var tier in Model.Tiers)
                                     {
                                         <th scope="col">
-                                            <div>@tier.Price</div>
+                                            <div>@(string.IsNullOrWhiteSpace(tier.Price) ? tier.Name : tier.Price)</div>
                                             <small class="text-muted d-block" style="font-size:0.75rem; font-weight:normal;">@tier.Name</small>
                                         </th>
                                     }
@@ -51,7 +51,8 @@
                                         <th scope="row" class="text-start">@feat.FeatureName</th>
                                         @for (int t = 0; t < (Model.Tiers?.Count ?? 0); t++)
                                         {
-                                            var isAvail = feat.IsAvailableForTier(t);
+                                            var tier = Model.Tiers![t];
+                                            var isAvail = feat.IsAvailableForTier(t, tier);
                                             <td>
                                                 @if (isAvail)
                                                 {
@@ -103,24 +104,10 @@
                                     <label for="@fieldId">@field.Label</label>
                                 </div>
                             }
-                            else if (fieldType == "email")
-                            {
-                                <div class="form-floating mb-3">
-                                    <input type="email" name="@field.Name" id="@fieldId" pattern="[^ @@]*@@[^ @@]*" class="form-control" placeholder="@field.Placeholder" @(field.IsRequired ? "required" : "")>
-                                    <label for="@fieldId">@field.Label</label>
-                                </div>
-                            }
-                            else if (fieldType == "phone" || fieldType == "tel")
-                            {
-                                <div class="form-floating mb-3">
-                                    <input type="tel" name="@field.Name" id="@fieldId" class="form-control" placeholder="@field.Placeholder" @(field.IsRequired ? "required" : "")>
-                                    <label for="@fieldId">@field.Label</label>
-                                </div>
-                            }
                             else
                             {
                                 <div class="form-floating mb-3">
-                                    <input type="text" name="@field.Name" id="@fieldId" class="form-control" placeholder="@field.Placeholder" @(field.IsRequired ? "required" : "")>
+                                    <input type="@(fieldType == "email" ? "email" : fieldType == "phone" ? "tel" : "text")" class="form-control" id="@fieldId" name="@field.Name" placeholder="@field.Placeholder" @(field.IsRequired ? "required" : "")>
                                     <label for="@fieldId">@field.Label</label>
                                 </div>
                             }
@@ -128,23 +115,29 @@
                     }
                     else
                     {
+                        <!-- Fallback default fields if no dynamic fields configured -->
                         <div class="form-floating mb-3">
-                            <input type="text" name="full-name" id="member-full-name" class="form-control" placeholder="Full Name" required>
-                            <label for="member-full-name">Full Name</label>
+                            <input type="text" name="member-name" id="member-name" class="form-control" placeholder="Full Name" required>
+                            <label for="member-name">Full Name</label>
                         </div>
 
                         <div class="form-floating mb-3">
-                            <input type="email" name="email" id="member-email" pattern="[^ @@]*@@[^ @@]*" class="form-control" placeholder="Email address" required>
+                            <input type="email" name="member-email" id="member-email" pattern="[^ @@]*@@[^ @@]*" class="form-control" placeholder="Email address" required>
                             <label for="member-email">Email address</label>
                         </div>
 
-                        <div class="form-floating mb-4">
-                            <textarea class="form-control" id="member-comments" name="message" placeholder="Describe message here" style="height: 100px;"></textarea>
-                            <label for="member-comments">Comments</label>
+                        <div class="form-floating mb-3">
+                            <input type="tel" name="member-phone" id="member-phone" class="form-control" placeholder="Phone Number">
+                            <label for="member-phone">Phone Number</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control" id="member-message" name="member-message" placeholder="Describe your membership query" style="height: 100px;"></textarea>
+                            <label for="member-message">Additional comments</label>
                         </div>
                     }
 
-                    <button type="submit" class="form-control btn custom-btn">Submit</button>
+                    <button type="submit" class="form-control mt-4">Submit</button>
                 </form>
             </div>
 

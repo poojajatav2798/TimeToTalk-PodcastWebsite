@@ -10,35 +10,35 @@ namespace TimeToTalk
 
     public partial class HomePage : IHeaderNavigationItem
     {
-        public bool ShowInHeaderNavigation { get; set; } = true;
+        public bool ShowInHeaderNavigation { get; set; }
         public string? NavigationTitle { get; set; }
         public int NavigationOrder { get; set; } = 1;
     }
 
     public partial class AboutPage : IHeaderNavigationItem
     {
-        public bool ShowInHeaderNavigation { get; set; } = true;
+        public bool ShowInHeaderNavigation { get; set; }
         public string? NavigationTitle { get; set; }
         public int NavigationOrder { get; set; } = 2;
     }
 
     public partial class ListingPage : IHeaderNavigationItem
     {
-        public bool ShowInHeaderNavigation { get; set; } = true;
+        public bool ShowInHeaderNavigation { get; set; }
         public string? NavigationTitle { get; set; }
         public int NavigationOrder { get; set; } = 3;
     }
 
     public partial class DetailPage : IHeaderNavigationItem
     {
-        public bool ShowInHeaderNavigation { get; set; } = true;
+        public bool ShowInHeaderNavigation { get; set; }
         public string? NavigationTitle { get; set; }
         public int NavigationOrder { get; set; } = 4;
     }
 
     public partial class ContactPage : IHeaderNavigationItem
     {
-        public bool ShowInHeaderNavigation { get; set; } = true;
+        public bool ShowInHeaderNavigation { get; set; }
         public string? NavigationTitle { get; set; }
         public int NavigationOrder { get; set; } = 5;
     }

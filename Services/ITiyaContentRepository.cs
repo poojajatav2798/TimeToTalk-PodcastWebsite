@@ -19,7 +19,9 @@ namespace Podcast.Web.Services
         Task<List<TeamMemberModel>> GetTeamMembersAsync();
         Task<List<TeamMemberModel>> GetTeamMembersByGuidsAsync(IEnumerable<System.Guid> guids);
         Task<List<MembershipTierModel>> GetMembershipTiersAsync();
+        Task<List<MembershipTierModel>> GetMembershipTiersByGuidsAsync(IEnumerable<Guid> guids);
         Task<List<MembershipFeatureRowModel>> GetMembershipFeaturesAsync();
+        Task<List<MembershipFeatureRowModel>> GetMembershipFeaturesByGuidsAsync(IEnumerable<Guid> guids);
         Task<List<FormFieldModel>> GetMembershipFormFieldsAsync();
         Task<WebsiteContentBlock?> GetContentBlockAsync(string blockName);
         Task<WebsiteContentBlock?> GetContentBlockByGuidAsync(System.Guid guid);

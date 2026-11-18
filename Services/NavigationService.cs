@@ -113,9 +113,10 @@ ORDER BY NavigationOrder ASC, WebPageItemID ASC";
             var sectionPrefix = isHomePage ? "" : "/";
 
             // Identify standard pages (specifically Home by url path '/' or item name 'Home')
-            DataRow? homeRow = rows.FirstOrDefault(r => CleanUrl(r["WebPageUrlPath"]?.ToString()) == "/" || (r["WebPageItemName"].ToString()!.Equals("home", StringComparison.OrdinalIgnoreCase) && r["ClassName"].ToString() == HomePage.CONTENT_TYPE_NAME))
-                              ?? rows.FirstOrDefault(r => r["WebPageItemName"].ToString()!.Equals("home", StringComparison.OrdinalIgnoreCase))
-                              ?? rows.FirstOrDefault(r => CleanUrl(r["WebPageUrlPath"]?.ToString()) == "/");
+            DataRow? homeRow = rows.FirstOrDefault(r => r["ClassName"].ToString() == HomePage.CONTENT_TYPE_NAME && (r["WebPageItemName"].ToString()!.StartsWith("Home", StringComparison.OrdinalIgnoreCase) || CleanUrl(r["WebPageUrlPath"]?.ToString()) == "/" || CleanUrl(r["WebPageUrlPath"]?.ToString()) == "/home"))
+                              ?? rows.FirstOrDefault(r => r["WebPageItemName"].ToString()!.StartsWith("Home", StringComparison.OrdinalIgnoreCase))
+                              ?? rows.FirstOrDefault(r => CleanUrl(r["WebPageUrlPath"]?.ToString()) == "/" || CleanUrl(r["WebPageUrlPath"]?.ToString()) == "/home")
+                              ?? rows.FirstOrDefault(r => r["ClassName"].ToString() == HomePage.CONTENT_TYPE_NAME);
 
             DataRow? aboutRow = rows.FirstOrDefault(r => r["ClassName"].ToString() == AboutPage.CONTENT_TYPE_NAME);
 
@@ -220,7 +221,7 @@ ORDER BY NavigationOrder ASC, WebPageItemID ASC";
                         disabledKeywords.Add("#section_4");
                         disabledKeywords.Add("/#section_4");
                     }
-                    if (cls == HomePage.CONTENT_TYPE_NAME || dPath.Equals("Home", StringComparison.OrdinalIgnoreCase) || dPath == "/")
+                    if (cls == HomePage.CONTENT_TYPE_NAME || dName.StartsWith("Home", StringComparison.OrdinalIgnoreCase) || dPath.Equals("Home", StringComparison.OrdinalIgnoreCase) || dPath == "/" || dPath == "/home")
                     {
                         disabledKeywords.Add("Home");
                         disabledKeywords.Add("#section_1");
@@ -502,7 +503,10 @@ ORDER BY NavigationOrder ASC, WebPageItemID ASC";
                 foreach (var chItem in contentHubItems)
                 {
                     // If this title or URL was explicitly disabled by an editor, DO NOT RE-ADD IT!
-                    if (disabledKeywords.Contains(chItem.Title) || disabledKeywords.Contains(chItem.Url) || disabledKeywords.Contains(CleanUrl(chItem.Url)))
+                    if (disabledKeywords.Contains(chItem.Title) ||
+                        disabledKeywords.Contains(chItem.Url) ||
+                        disabledKeywords.Contains(CleanUrl(chItem.Url)) ||
+                        (disabledKeywords.Contains("Home") && (chItem.Title.Equals("Home", StringComparison.OrdinalIgnoreCase) || chItem.Url.Contains("#section_1"))))
                     {
                         continue;
                     }

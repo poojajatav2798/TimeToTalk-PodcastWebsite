@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Podcast.Web.Components.Widgets.TiyaMembership;
 using Podcast.Web.Models;
 using Podcast.Web.Services;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 [assembly: RegisterWidget(
@@ -45,13 +47,46 @@ namespace Podcast.Web.Components.Widgets.TiyaMembership
 
         public async Task<IViewComponentResult> InvokeAsync(ComponentViewModel<TiyaMembershipProperties> widgetModel)
         {
-            var tiers = await _contentRepo.GetMembershipTiersAsync();
-            var features = await _contentRepo.GetMembershipFeaturesAsync();
+            var props = widgetModel.Properties;
+
+            var tierGuids = props.SelectedTiers?.Select(r => r.Identifier).ToList() ?? new List<Guid>();
+            var featureGuids = props.SelectedFeatures?.Select(r => r.Identifier).ToList() ?? new List<Guid>();
+
+            // Support legacy SelectedItems if specific selectors were not populated
+            if (!tierGuids.Any() && !featureGuids.Any() && props.SelectedItems != null && props.SelectedItems.Any())
+            {
+                var legacyGuids = props.SelectedItems.Select(r => r.Identifier).ToList();
+                tierGuids = legacyGuids;
+                featureGuids = legacyGuids;
+            }
+
+            List<MembershipTierModel> tiers;
+            if (tierGuids.Any())
+            {
+                var selectedTiers = await _contentRepo.GetMembershipTiersByGuidsAsync(tierGuids);
+                tiers = selectedTiers.Any() ? selectedTiers : await _contentRepo.GetMembershipTiersAsync();
+            }
+            else
+            {
+                tiers = await _contentRepo.GetMembershipTiersAsync();
+            }
+
+            List<MembershipFeatureRowModel> features;
+            if (featureGuids.Any())
+            {
+                var selectedFeatures = await _contentRepo.GetMembershipFeaturesByGuidsAsync(featureGuids);
+                features = selectedFeatures.Any() ? selectedFeatures : await _contentRepo.GetMembershipFeaturesAsync();
+            }
+            else
+            {
+                features = await _contentRepo.GetMembershipFeaturesAsync();
+            }
+
             var formFields = await _contentRepo.GetMembershipFormFieldsAsync();
 
             var model = new TiyaMembershipViewModel
             {
-                Properties = widgetModel.Properties,
+                Properties = props,
                 Tiers = tiers,
                 Features = features,
                 FormFields = formFields

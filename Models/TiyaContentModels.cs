@@ -19,7 +19,9 @@ namespace Podcast.Web.Models
 
     public class MembershipFeatureRowModel
     {
+        public int Id { get; set; }
         public string FeatureName { get; set; } = string.Empty;
+        public string RawFlags { get; set; } = string.Empty;
         public List<bool> TierAvailabilityList { get; set; } = new();
 
         public bool Tier1Available
@@ -40,8 +42,23 @@ namespace Podcast.Web.Models
             set => SetTierAvailability(2, value);
         }
 
-        public bool IsAvailableForTier(int tierIndex)
+        public bool IsAvailableForTier(int tierIndex, MembershipTierModel? tier = null)
         {
+            if (tier != null && !string.IsNullOrWhiteSpace(RawFlags))
+            {
+                var tokens = RawFlags.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var tok in tokens)
+                {
+                    var t = tok.Trim();
+                    if (t.Equals(tier.TierCode, StringComparison.OrdinalIgnoreCase) ||
+                        t.Equals(tier.Name, StringComparison.OrdinalIgnoreCase) ||
+                        t.Equals(tier.Id.ToString(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+
             if (tierIndex >= 0 && tierIndex < TierAvailabilityList.Count)
             {
                 return TierAvailabilityList[tierIndex];
