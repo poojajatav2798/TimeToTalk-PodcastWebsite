@@ -22,29 +22,30 @@ namespace Podcast.Web.Components.ViewComponents.Footer
         {
             var menuItems = await _navigationService.GetNavigationTreeAsync(string.Empty);
             var footerConfig = await _contentRepo.GetFooterConfigAsync();
+            var settings = await _contentRepo.GetWebsiteSettingsAsync();
 
             var model = new FooterViewModel
             {
                 FooterItems = menuItems,
-                BrandTitle = footerConfig.BrandTitle,
+                BrandTitle = !string.IsNullOrWhiteSpace(settings?.WebsiteName) ? settings.WebsiteName : footerConfig.BrandTitle,
                 BrandSubtitle = footerConfig.BrandSubtitle,
-                BrandLogoUrl = !string.IsNullOrWhiteSpace(footerConfig.BrandLogoUrl) ? footerConfig.BrandLogoUrl : "/images/logo.png",
-                Description = footerConfig.Description,
+                BrandLogoUrl = !string.IsNullOrWhiteSpace(settings?.FooterLogoUrl) ? settings.FooterLogoUrl : (!string.IsNullOrWhiteSpace(footerConfig.BrandLogoUrl) ? footerConfig.BrandLogoUrl : "/images/logo.png"),
+                Description = !string.IsNullOrWhiteSpace(settings?.FooterDescription) ? settings.FooterDescription : footerConfig.Description,
                 ScheduleTitle = !string.IsNullOrWhiteSpace(footerConfig.ScheduleTitle) ? footerConfig.ScheduleTitle : "Join Us",
                 WeekdayLabel = !string.IsNullOrWhiteSpace(footerConfig.WeekdayLabel) ? footerConfig.WeekdayLabel : "Mon-Fri",
                 WeekdayHours = footerConfig.WeekdayHours,
                 WeekendLabel = !string.IsNullOrWhiteSpace(footerConfig.WeekendLabel) ? footerConfig.WeekendLabel : "Sat-Sun",
                 WeekendHours = footerConfig.WeekendHours,
-                CopyrightText = footerConfig.CopyrightText,
+                CopyrightText = !string.IsNullOrWhiteSpace(settings?.CopyrightText) ? settings.CopyrightText : footerConfig.CopyrightText,
                 DesignerCredit = footerConfig.DesignerCredit,
                 DesignerUrl = footerConfig.DesignerUrl,
-                PhoneNumber = footerConfig.PhoneNumber,
-                EmailAddress = footerConfig.EmailAddress,
-                InstagramUrl = footerConfig.InstagramUrl,
-                TwitterUrl = footerConfig.TwitterUrl,
-                WhatsAppUrl = footerConfig.WhatsAppUrl,
-                FacebookUrl = footerConfig.FacebookUrl,
-                LinkedInUrl = footerConfig.LinkedInUrl
+                PhoneNumber = !string.IsNullOrWhiteSpace(settings?.ContactPhone) ? settings.ContactPhone : footerConfig.PhoneNumber,
+                EmailAddress = !string.IsNullOrWhiteSpace(settings?.ContactEmail) ? settings.ContactEmail : footerConfig.EmailAddress,
+                InstagramUrl = !string.IsNullOrWhiteSpace(settings?.InstagramUrl) ? settings.InstagramUrl : footerConfig.InstagramUrl,
+                TwitterUrl = !string.IsNullOrWhiteSpace(settings?.TwitterUrl) ? settings.TwitterUrl : footerConfig.TwitterUrl,
+                WhatsAppUrl = !string.IsNullOrWhiteSpace(settings?.WhatsAppUrl) ? settings.WhatsAppUrl : footerConfig.WhatsAppUrl,
+                FacebookUrl = !string.IsNullOrWhiteSpace(settings?.FacebookUrl) ? settings.FacebookUrl : footerConfig.FacebookUrl,
+                LinkedInUrl = !string.IsNullOrWhiteSpace(settings?.LinkedInUrl) ? settings.LinkedInUrl : footerConfig.LinkedInUrl
             };
 
             return View("~/Components/ViewComponents/Footer/_Footer.cshtml", model);

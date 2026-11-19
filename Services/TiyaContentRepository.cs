@@ -682,6 +682,67 @@ namespace Podcast.Web.Services
         }
 
         // ==========================================
+        // DYNAMIC WEBSITE SETTINGS & HOME PAGE
+        // ==========================================
+        public async Task<TiyaWebsiteSettings> GetWebsiteSettingsAsync()
+        {
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(TiyaWebsiteSettings.CONTENT_TYPE_NAME);
+
+                var items = await _queryExecutor.GetMappedResult<TiyaWebsiteSettings>(builder);
+                var settings = items?.FirstOrDefault();
+                if (settings != null)
+                {
+                    return settings;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load TiyaWebsiteSettings from Content Hub. Using default settings.");
+            }
+
+            return new TiyaWebsiteSettings
+            {
+                WebsiteName = "Tiya Golf Club",
+                HeaderLogoUrl = "/images/logo.png",
+                FooterLogoUrl = "/images/logo.png",
+                FaviconUrl = "/favicon.ico",
+                MemberLoginButtonText = "Member Login",
+                MemberLoginButtonUrl = "#offcanvasExample",
+                FooterDescription = "Tiya Golf Club is a modern sports club offering championship courses, professional coaching, premium clubhouse facilities, and a thriving community for golf enthusiasts.",
+                ContactEmail = "info@tiyagolf.com",
+                ContactPhone = "(010) 020-0340",
+                FooterAddress = "1200 Grand Avenue, Tiya Valley, CA 90210",
+                CopyrightText = "Copyright © 2026 Tiya Golf Club. All rights reserved.",
+                FacebookUrl = "https://facebook.com",
+                TwitterUrl = "https://twitter.com",
+                InstagramUrl = "https://instagram.com",
+                LinkedInUrl = "https://linkedin.com",
+                WhatsAppUrl = "https://whatsapp.com",
+                YouTubeUrl = "https://youtube.com"
+            };
+        }
+
+        public async Task<HomePage?> GetHomePageContentAsync()
+        {
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(HomePage.CONTENT_TYPE_NAME);
+
+                var pages = await _queryExecutor.GetMappedResult<HomePage>(builder);
+                return pages?.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load HomePage content from CMS.");
+                return null;
+            }
+        }
+
+        // ==========================================
         // DYNAMIC HEADER AND FOOTER (CONTENT HUB)
         // ==========================================
         public async Task<TiyaHeaderModel> GetHeaderConfigAsync()
@@ -689,6 +750,32 @@ namespace Podcast.Web.Services
             var header = new TiyaHeaderModel();
             try
             {
+                var settings = await GetWebsiteSettingsAsync();
+                if (settings != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(settings.WebsiteName))
+                    {
+                        header.BrandTitle = settings.WebsiteName;
+                        header.BrandLogoAlt = settings.WebsiteName;
+                    }
+                    if (!string.IsNullOrWhiteSpace(settings.HeaderLogoUrl))
+                    {
+                        header.BrandLogoUrl = settings.HeaderLogoUrl;
+                    }
+                    if (!string.IsNullOrWhiteSpace(settings.MemberLoginButtonText))
+                    {
+                        header.ButtonText = settings.MemberLoginButtonText;
+                    }
+                    if (!string.IsNullOrWhiteSpace(settings.MemberLoginButtonUrl))
+                    {
+                        header.ButtonUrl = settings.MemberLoginButtonUrl;
+                    }
+                    if (!string.IsNullOrWhiteSpace(settings.ContactPhone))
+                    {
+                        header.QuestionsPhone = settings.ContactPhone;
+                    }
+                }
+
                 var block = await GetContentBlockAsync("tiya-header-config");
                 if (block != null)
                 {
@@ -749,6 +836,22 @@ namespace Podcast.Web.Services
             var footer = new TiyaFooterModel();
             try
             {
+                var settings = await GetWebsiteSettingsAsync();
+                if (settings != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(settings.WebsiteName)) footer.BrandTitle = settings.WebsiteName;
+                    if (!string.IsNullOrWhiteSpace(settings.FooterLogoUrl)) footer.BrandLogoUrl = settings.FooterLogoUrl;
+                    if (!string.IsNullOrWhiteSpace(settings.FooterDescription)) footer.Description = settings.FooterDescription;
+                    if (!string.IsNullOrWhiteSpace(settings.ContactEmail)) footer.EmailAddress = settings.ContactEmail;
+                    if (!string.IsNullOrWhiteSpace(settings.ContactPhone)) footer.PhoneNumber = settings.ContactPhone;
+                    if (!string.IsNullOrWhiteSpace(settings.CopyrightText)) footer.CopyrightText = settings.CopyrightText;
+                    if (!string.IsNullOrWhiteSpace(settings.FacebookUrl)) footer.FacebookUrl = settings.FacebookUrl;
+                    if (!string.IsNullOrWhiteSpace(settings.TwitterUrl)) footer.TwitterUrl = settings.TwitterUrl;
+                    if (!string.IsNullOrWhiteSpace(settings.InstagramUrl)) footer.InstagramUrl = settings.InstagramUrl;
+                    if (!string.IsNullOrWhiteSpace(settings.LinkedInUrl)) footer.LinkedInUrl = settings.LinkedInUrl;
+                    if (!string.IsNullOrWhiteSpace(settings.WhatsAppUrl)) footer.WhatsAppUrl = settings.WhatsAppUrl;
+                }
+
                 var block = await GetContentBlockAsync("tiya-footer-config");
                 if (block != null)
                 {

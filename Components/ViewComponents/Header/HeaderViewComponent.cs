@@ -27,20 +27,21 @@ namespace Podcast.Web.Components.ViewComponents.Header
             var currentPath = _httpContextAccessor.HttpContext?.Request.Path.Value ?? "/";
             var menuItems = await _navigationService.GetNavigationTreeAsync(currentPath);
             var headerConfig = await _contentRepo.GetHeaderConfigAsync();
+            var settings = await _contentRepo.GetWebsiteSettingsAsync();
 
             var model = new HeaderViewModel
             {
                 MenuItems = menuItems,
-                BrandTitle = headerConfig.BrandTitle,
+                BrandTitle = !string.IsNullOrWhiteSpace(settings?.WebsiteName) ? settings.WebsiteName : headerConfig.BrandTitle,
                 BrandSubtitle = headerConfig.BrandSubtitle,
-                BrandLogoUrl = headerConfig.BrandLogoUrl,
-                BrandLogoAlt = headerConfig.BrandLogoAlt,
+                BrandLogoUrl = !string.IsNullOrWhiteSpace(settings?.HeaderLogoUrl) ? settings.HeaderLogoUrl : headerConfig.BrandLogoUrl,
+                BrandLogoAlt = !string.IsNullOrWhiteSpace(settings?.WebsiteName) ? settings.WebsiteName : headerConfig.BrandLogoAlt,
                 SearchPlaceholder = headerConfig.SearchPlaceholder,
                 SearchActionUrl = "/listing-page",
-                ButtonText = headerConfig.ButtonText,
-                ButtonUrl = headerConfig.ButtonUrl,
+                ButtonText = !string.IsNullOrWhiteSpace(settings?.MemberLoginButtonText) ? settings.MemberLoginButtonText : headerConfig.ButtonText,
+                ButtonUrl = !string.IsNullOrWhiteSpace(settings?.MemberLoginButtonUrl) ? settings.MemberLoginButtonUrl : headerConfig.ButtonUrl,
                 QuestionsTitle = headerConfig.QuestionsTitle,
-                QuestionsPhone = headerConfig.QuestionsPhone
+                QuestionsPhone = !string.IsNullOrWhiteSpace(settings?.ContactPhone) ? settings.ContactPhone : headerConfig.QuestionsPhone
             };
 
             return View("~/Components/ViewComponents/Header/_Header.cshtml", model);

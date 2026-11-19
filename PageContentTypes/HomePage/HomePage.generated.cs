@@ -75,5 +75,59 @@ namespace TimeToTalk
 		/// MetaDescription.
 		/// </summary>
 		public string MetaDescription { get; set; }
+
+
+		/// <summary>
+		/// HeroWelcomeText.
+		/// </summary>
+		public string? HeroWelcomeText { get; set; }
+
+
+		/// <summary>
+		/// HeroMainHeading.
+		/// </summary>
+		public string? HeroMainHeading { get; set; }
+
+
+		/// <summary>
+		/// HeroAnimatedText.
+		/// </summary>
+		public string? HeroAnimatedText { get; set; }
+
+
+		/// <summary>
+		/// HeroBackgroundImage.
+		/// </summary>
+		public string? HeroBackgroundImage { get; set; }
+
+
+		/// <summary>
+		/// HeroVideoUrl.
+		/// </summary>
+		public string? HeroVideoUrl { get; set; }
+
+
+		/// <summary>
+		/// PrimaryButtonText.
+		/// </summary>
+		public string? PrimaryButtonText { get; set; }
+
+
+		/// <summary>
+		/// PrimaryButtonUrl.
+		/// </summary>
+		public string? PrimaryButtonUrl { get; set; }
+
+
+		/// <summary>
+		/// SecondaryButtonText.
+		/// </summary>
+		public string? SecondaryButtonText { get; set; }
+
+
+		/// <summary>
+		/// SecondaryButtonUrl.
+		/// </summary>
+		public string? SecondaryButtonUrl { get; set; }
 	}
 }
