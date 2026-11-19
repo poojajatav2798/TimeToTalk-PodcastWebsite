@@ -786,12 +786,6 @@ namespace Podcast.Web.Controllers
                             heroTitle = listingBlock?.PrimaryButtonText ?? "Event Listing",
                             sectionTitle = listingBlock?.Heading ?? "Upcoming Golf Events",
                             eventsPerPage = 4
-                        }),
-                        CreateArea("listing-area", "TiyaGolf.TiyaEventListingWidget", new
-                        {
-                            heroTitle = listingBlock?.PrimaryButtonText ?? "Event Listing",
-                            sectionTitle = listingBlock?.Heading ?? "Upcoming Golf Events",
-                            eventsPerPage = 4
                         })
                     }
                 };
@@ -802,14 +796,6 @@ namespace Podcast.Web.Controllers
                     editableAreas = new[]
                     {
                         CreateArea("main-area", "TiyaGolf.TiyaEventDetailWidget", new
-                        {
-                            heroTitle = detailBlock?.PrimaryButtonText ?? "Event Detail",
-                            eventTitle = featuredEvent?.Title ?? detailBlock?.Heading ?? "Championship Tournament",
-                            subtitle = featuredEvent?.Category ?? "VIP / Private",
-                            location = featuredEvent?.Location ?? "National Center, NYC",
-                            ticketPrice = featuredEvent?.TicketPrice ?? "$250"
-                        }),
-                        CreateArea("detail-area", "TiyaGolf.TiyaEventDetailWidget", new
                         {
                             heroTitle = detailBlock?.PrimaryButtonText ?? "Event Detail",
                             eventTitle = featuredEvent?.Title ?? detailBlock?.Heading ?? "Championship Tournament",

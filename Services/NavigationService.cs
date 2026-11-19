@@ -193,47 +193,53 @@ ORDER BY NavigationOrder ASC, WebPageItemID ASC";
                     }
                     if (!string.IsNullOrWhiteSpace(dName)) disabledKeywords.Add(dName.Trim());
 
-                    if (cls == AboutPage.CONTENT_TYPE_NAME || dName.Contains("about", StringComparison.OrdinalIgnoreCase) || dPath.Contains("about", StringComparison.OrdinalIgnoreCase))
+                    int pageId = Convert.ToInt32(r["WebPageItemID"]);
+                    bool isThisHome = (homeRow != null && pageId == Convert.ToInt32(homeRow["WebPageItemID"]))
+                                      || (dName.Equals("Home", StringComparison.OrdinalIgnoreCase) && pageId == 1)
+                                      || dPath.Equals("Home", StringComparison.OrdinalIgnoreCase)
+                                      || dPath == "/" || dPath == "/home";
+
+                    if (isThisHome)
+                    {
+                        disabledKeywords.Add("Home");
+                        disabledKeywords.Add("#section_1");
+                        disabledKeywords.Add("/#section_1");
+                    }
+                    if ((aboutRow != null && pageId == Convert.ToInt32(aboutRow["WebPageItemID"])) || dName.Contains("about", StringComparison.OrdinalIgnoreCase) || dPath.Contains("about", StringComparison.OrdinalIgnoreCase))
                     {
                         disabledKeywords.Add("About");
                         disabledKeywords.Add("About Us");
                         disabledKeywords.Add("#section_2");
                         disabledKeywords.Add("/#section_2");
                     }
-                    if (cls == ContactPage.CONTENT_TYPE_NAME || dName.Contains("contact", StringComparison.OrdinalIgnoreCase) || dPath.Contains("contact", StringComparison.OrdinalIgnoreCase))
+                    if ((contactRow != null && pageId == Convert.ToInt32(contactRow["WebPageItemID"])) || dName.Contains("contact", StringComparison.OrdinalIgnoreCase) || dPath.Contains("contact", StringComparison.OrdinalIgnoreCase))
                     {
                         disabledKeywords.Add("Contact");
                         disabledKeywords.Add("Contact Us");
                         disabledKeywords.Add("#section_5");
                         disabledKeywords.Add("/#section_5");
                     }
-                    if (dName.Contains("membership", StringComparison.OrdinalIgnoreCase) || dPath.Contains("membership", StringComparison.OrdinalIgnoreCase))
+                    if ((membershipRow != null && pageId == Convert.ToInt32(membershipRow["WebPageItemID"])) || dName.Contains("membership", StringComparison.OrdinalIgnoreCase) || dPath.Contains("membership", StringComparison.OrdinalIgnoreCase))
                     {
                         disabledKeywords.Add("Membership");
                         disabledKeywords.Add("Membership at Tiya");
                         disabledKeywords.Add("#section_3");
                         disabledKeywords.Add("/#section_3");
                     }
-                    if (dName.Contains("event", StringComparison.OrdinalIgnoreCase) || dPath.Contains("event", StringComparison.OrdinalIgnoreCase))
+                    if ((eventsNavRow != null && pageId == Convert.ToInt32(eventsNavRow["WebPageItemID"])) || dName.Contains("event", StringComparison.OrdinalIgnoreCase) || dPath.Contains("event", StringComparison.OrdinalIgnoreCase))
                     {
                         disabledKeywords.Add("Events");
                         disabledKeywords.Add("Upcoming Events");
                         disabledKeywords.Add("#section_4");
                         disabledKeywords.Add("/#section_4");
                     }
-                    if (cls == HomePage.CONTENT_TYPE_NAME || dName.StartsWith("Home", StringComparison.OrdinalIgnoreCase) || dPath.Equals("Home", StringComparison.OrdinalIgnoreCase) || dPath == "/" || dPath == "/home")
-                    {
-                        disabledKeywords.Add("Home");
-                        disabledKeywords.Add("#section_1");
-                        disabledKeywords.Add("/#section_1");
-                    }
-                    if (cls == ListingPage.CONTENT_TYPE_NAME || dPath.Contains("listing", StringComparison.OrdinalIgnoreCase))
+                    if ((listingRow != null && pageId == Convert.ToInt32(listingRow["WebPageItemID"])) || dPath.Contains("listing", StringComparison.OrdinalIgnoreCase))
                     {
                         disabledKeywords.Add("Event Listing");
                         disabledKeywords.Add("Listing");
                         disabledKeywords.Add("/listing-page");
                     }
-                    if (cls == DetailPage.CONTENT_TYPE_NAME || dPath.Contains("detail", StringComparison.OrdinalIgnoreCase))
+                    if ((detailRow != null && pageId == Convert.ToInt32(detailRow["WebPageItemID"])) || dPath.Contains("detail", StringComparison.OrdinalIgnoreCase))
                     {
                         disabledKeywords.Add("Event Detail");
                         disabledKeywords.Add("Detail");
@@ -243,32 +249,22 @@ ORDER BY NavigationOrder ASC, WebPageItemID ASC";
             }
 
             // 1. Home -> #section_1
-            if (!disabledKeywords.Contains("Home") && !disabledKeywords.Contains("#section_1"))
+            bool homeShows = homeRow == null || RowShowsInHeader(homeRow);
+            if (homeShows && !disabledKeywords.Contains("Home") && !disabledKeywords.Contains("#section_1"))
             {
-                if (homeRow != null && RowShowsInHeader(homeRow))
+                int homeId = homeRow != null ? Convert.ToInt32(homeRow["WebPageItemID"]) : 1;
+                string homeTitle = homeRow != null ? RowTitle(homeRow, "Home") : "Home";
+                int homeOrder = homeRow != null ? Convert.ToInt32(homeRow["NavigationOrder"]) : 1;
+
+                menuItems.Add(new NavigationItemViewModel
                 {
-                    menuItems.Add(new NavigationItemViewModel
-                    {
-                        WebPageItemId = Convert.ToInt32(homeRow["WebPageItemID"]),
-                        Title = RowTitle(homeRow, "Home"),
-                        Url = sectionPrefix + "#section_1",
-                        IsClickScroll = true,
-                        IsActive = isHomePage,
-                        Order = Convert.ToInt32(homeRow["NavigationOrder"])
-                    });
-                }
-                else if (homeRow == null)
-                {
-                    menuItems.Add(new NavigationItemViewModel
-                    {
-                        WebPageItemId = 1,
-                        Title = "Home",
-                        Url = sectionPrefix + "#section_1",
-                        IsClickScroll = true,
-                        IsActive = isHomePage,
-                        Order = 1
-                    });
-                }
+                    WebPageItemId = homeId,
+                    Title = string.IsNullOrWhiteSpace(homeTitle) ? "Home" : homeTitle,
+                    Url = sectionPrefix + "#section_1",
+                    IsClickScroll = true,
+                    IsActive = isHomePage,
+                    Order = homeOrder > 0 ? homeOrder : 1
+                });
             }
 
             // 2. About -> #section_2
