@@ -41,9 +41,11 @@ namespace Podcast.Web.Services
         Task<int> CreateOrUpdateMembershipTierAsync(MembershipTierModel model, CancellationToken cancellationToken = default);
         Task<bool> DeleteMembershipTierAsync(int contentItemId, CancellationToken cancellationToken = default);
 
-        // Dynamic Website Settings & Home Page
+        // Dynamic Website Settings, Home, About, and Contact Pages
         Task<TiyaWebsiteSettings> GetWebsiteSettingsAsync();
         Task<HomePage?> GetHomePageContentAsync();
+        Task<AboutPage?> GetAboutPageContentAsync();
+        Task<ContactPage?> GetContactPageContentAsync();
 
         // Dynamic Header and Footer Configurations
         Task<TiyaHeaderModel> GetHeaderConfigAsync();

@@ -367,7 +367,7 @@ namespace Podcast.Web.Services
                 var blocks = await _queryExecutor.GetMappedResult<WebsiteContentBlock>(builder);
                 if (blocks != null && blocks.Any())
                 {
-                    foreach (var b in blocks.OrderBy(x => x.DisplayOrder))
+                    foreach (var b in blocks.Where(x => x.IsActive).OrderBy(x => x.DisplayOrder))
                     {
                         tiers.Add(MapBlockToTier(b));
                     }
@@ -376,16 +376,6 @@ namespace Podcast.Web.Services
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to query membership tiers from Content Hub.");
-            }
-
-            var folderIds = GetFolderItemIds(FOLDER_MEMBERSHIPS);
-            if (folderIds.Any())
-            {
-                var folderTiers = tiers.Where(t => folderIds.Contains(t.Id)).OrderBy(t => t.Order).ToList();
-                if (folderTiers.Any())
-                {
-                    tiers = folderTiers;
-                }
             }
 
             if (!tiers.Any())
@@ -407,7 +397,8 @@ namespace Podcast.Web.Services
                 var builder = new ContentItemQueryBuilder()
                     .ForContentType(WebsiteContentBlock.CONTENT_TYPE_NAME, q =>
                     {
-                        q.Where(w => w.WhereIn(nameof(IContentItemFieldsSource.SystemFields.ContentItemGUID), guidList));
+                        q.Where(w => w.WhereIn(nameof(IContentItemFieldsSource.SystemFields.ContentItemGUID), guidList)
+                                      .WhereEquals(nameof(WebsiteContentBlock.BlockType), "MembershipTier"));
                     });
 
                 var blocks = await _queryExecutor.GetMappedResult<WebsiteContentBlock>(builder);
@@ -416,7 +407,7 @@ namespace Podcast.Web.Services
                     var blockDict = blocks.ToDictionary(b => b.SystemFields.ContentItemGUID);
                     foreach (var g in guidList)
                     {
-                        if (blockDict.TryGetValue(g, out var b))
+                        if (blockDict.TryGetValue(g, out var b) && b.IsActive)
                         {
                             list.Add(MapBlockToTier(b));
                         }
@@ -443,7 +434,7 @@ namespace Podcast.Web.Services
                 var blocks = await _queryExecutor.GetMappedResult<WebsiteContentBlock>(builder);
                 if (blocks != null && blocks.Any())
                 {
-                    foreach (var b in blocks.OrderBy(x => x.DisplayOrder))
+                    foreach (var b in blocks.Where(x => x.IsActive).OrderBy(x => x.DisplayOrder))
                     {
                         features.Add(MapBlockToFeature(b));
                     }
@@ -452,16 +443,6 @@ namespace Podcast.Web.Services
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to query membership features from Content Hub.");
-            }
-
-            var folderIds = GetFolderItemIds(FOLDER_MEMBERSHIPS);
-            if (folderIds.Any())
-            {
-                var folderFeatures = features.Where(f => folderIds.Contains(f.Id)).ToList();
-                if (folderFeatures.Any())
-                {
-                    features = folderFeatures;
-                }
             }
 
             if (!features.Any())
@@ -483,7 +464,8 @@ namespace Podcast.Web.Services
                 var builder = new ContentItemQueryBuilder()
                     .ForContentType(WebsiteContentBlock.CONTENT_TYPE_NAME, q =>
                     {
-                        q.Where(w => w.WhereIn(nameof(IContentItemFieldsSource.SystemFields.ContentItemGUID), guidList));
+                        q.Where(w => w.WhereIn(nameof(IContentItemFieldsSource.SystemFields.ContentItemGUID), guidList)
+                                      .WhereEquals(nameof(WebsiteContentBlock.BlockType), "MembershipFeature"));
                     });
 
                 var blocks = await _queryExecutor.GetMappedResult<WebsiteContentBlock>(builder);
@@ -492,7 +474,7 @@ namespace Podcast.Web.Services
                     var blockDict = blocks.ToDictionary(b => b.SystemFields.ContentItemGUID);
                     foreach (var g in guidList)
                     {
-                        if (blockDict.TryGetValue(g, out var b))
+                        if (blockDict.TryGetValue(g, out var b) && b.IsActive)
                         {
                             list.Add(MapBlockToFeature(b));
                         }
@@ -738,6 +720,40 @@ namespace Podcast.Web.Services
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to load HomePage content from CMS.");
+                return null;
+            }
+        }
+
+        public async Task<AboutPage?> GetAboutPageContentAsync()
+        {
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(AboutPage.CONTENT_TYPE_NAME);
+
+                var pages = await _queryExecutor.GetMappedResult<AboutPage>(builder);
+                return pages?.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load AboutPage content from CMS.");
+                return null;
+            }
+        }
+
+        public async Task<ContactPage?> GetContactPageContentAsync()
+        {
+            try
+            {
+                var builder = new ContentItemQueryBuilder()
+                    .ForContentType(ContactPage.CONTENT_TYPE_NAME);
+
+                var pages = await _queryExecutor.GetMappedResult<ContactPage>(builder);
+                return pages?.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load ContactPage content from CMS.");
                 return null;
             }
         }

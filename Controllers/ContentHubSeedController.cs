@@ -729,20 +729,11 @@ namespace Podcast.Web.Controllers
                 }
 
                 // 1. HOME PAGE WIDGETS (Populated dynamically from Content Hub saved data)
+                // Note: Hero section is rendered directly from HomePage content type fields, not as a Page Builder widget.
                 var homeWidgets = new
                 {
                     editableAreas = new[]
                     {
-                        CreateArea("hero-area", "TiyaGolf.HeroBannerWidget", new
-                        {
-                            heroTitle = heroBlock?.Heading ?? "Tiya Golf Club",
-                            animatedWords = heroBlock?.Description ?? "Modern, Creative, Lifestyle",
-                            button1Text = heroBlock?.PrimaryButtonText ?? "Our Story",
-                            button1Link = "#section_2",
-                            button2Text = heroBlock?.IconName ?? "Become a member",
-                            button2Link = "#section_3",
-                            videoUrl = "https://www.youtube.com/embed/MGNgbAGK6s8"
-                        }),
                         CreateArea("about-area", "TiyaGolf.TiyaAboutWidget", new
                         {
                             sectionTitle = historyBlock?.PrimaryButtonText ?? "About Tiya",

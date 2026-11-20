@@ -60,15 +60,23 @@ namespace Podcast.Web.Components.Widgets.TiyaMembership
                 featureGuids = legacyGuids;
             }
 
+            var allActiveTiers = await _contentRepo.GetMembershipTiersAsync();
             List<MembershipTierModel> tiers;
             if (tierGuids.Any())
             {
                 var selectedTiers = await _contentRepo.GetMembershipTiersByGuidsAsync(tierGuids);
-                tiers = selectedTiers.Any() ? selectedTiers : await _contentRepo.GetMembershipTiersAsync();
+                tiers = (selectedTiers.Count >= allActiveTiers.Count || (!allActiveTiers.Any() && selectedTiers.Any()))
+                    ? selectedTiers
+                    : allActiveTiers;
             }
             else
             {
-                tiers = await _contentRepo.GetMembershipTiersAsync();
+                tiers = allActiveTiers;
+            }
+
+            if (!tiers.Any())
+            {
+                tiers = allActiveTiers;
             }
 
             List<MembershipFeatureRowModel> features;

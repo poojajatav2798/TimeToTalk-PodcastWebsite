@@ -1,13 +1,28 @@
 #nullable enable
 using Microsoft.AspNetCore.Mvc;
+using Podcast.Web.Services;
+using System.Threading.Tasks;
 using TimeToTalk;
 
 namespace Podcast.Web.Controllers
 {
     public class ContactController : Controller
     {
-        public IActionResult Index()
+        private readonly ITiyaContentRepository _contentRepo;
+
+        public ContactController(ITiyaContentRepository contentRepo)
         {
+            _contentRepo = contentRepo;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var contactPage = await _contentRepo.GetContactPageContentAsync();
+            var settings = await _contentRepo.GetWebsiteSettingsAsync();
+
+            ViewBag.ContactPage = contactPage;
+            ViewBag.Settings = settings;
+
             return View();
         }
 

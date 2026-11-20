@@ -9,12 +9,25 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "About Tiya Golf Club";
-    var history = await ContentRepo.GetContentBlockAsync("tiya-history-block");
-    var heroHeader = history?.PrimaryButtonText ?? "About Tiya";
-    var storyTitle = history?.Heading ?? "Tiya Club History";
-    var storyText1 = history?.Description ?? "Since 1984, Tiya is ranked #8 in the top 10 golf courses in the world. Tiya is a modern golf club layout designed for champions, leisure, and memorable tournaments.";
-    var storyText2 = history?.PrimaryButtonURL ?? "Our championship course offers picturesque landscapes, premier dining facilities, and a dedicated team of PGA instructors passionate about the sport.";
-    var storyImg = !string.IsNullOrWhiteSpace(history?.Image?.Url) ? history.Image.Url : "/images/members/portrait-young-handsome-businessman-wearing-suit-standing-with-crossed-arms-with-isolated-studio-white-background.jpg";
+
+    var aboutPage = await ContentRepo.GetAboutPageContentAsync();
+    var heroHeader = !string.IsNullOrWhiteSpace(aboutPage?.HeaderTitle) 
+        ? aboutPage.HeaderTitle 
+        : (!string.IsNullOrWhiteSpace(aboutPage?.Title) ? aboutPage.Title : "About Tiya");
+
+    var storyTitle = !string.IsNullOrWhiteSpace(aboutPage?.StoryTitle) 
+        ? aboutPage.StoryTitle 
+        : "Tiya Club History";
+
+    var storyText = !string.IsNullOrWhiteSpace(aboutPage?.StoryText)
+        ? aboutPage.StoryText
+        : "Since 1984, Tiya is ranked #8 in the top 10 golf courses in the world. Tiya is a modern golf club layout designed for champions, leisure, and memorable tournaments.";
+
+    var storyImg = !string.IsNullOrWhiteSpace(aboutPage?.StoryImageUrl)
+        ? aboutPage.StoryImageUrl
+        : "/images/members/portrait-young-handsome-businessman-wearing-suit-standing-with-crossed-arms-with-isolated-studio-white-background.jpg";
+
+    var teamMembers = await ContentRepo.GetTeamMembersAsync();
 }
 
 <!-- Site Header -->
@@ -42,8 +55,7 @@
                 <div class="section-title-wrap mb-4">
                     <h3 class="section-title">@storyTitle</h3>
                 </div>
-                <p class="lead text-muted">@storyText1</p>
-                <p>@storyText2</p>
+                <p class="lead text-muted">@storyText</p>
                 <div class="mt-4">
                     <a href="/#section_4" class="btn custom-btn me-3">Upcoming Events</a>
                     <a href="/#section_5" class="btn custom-border-btn">Contact Us</a>
@@ -53,8 +65,37 @@
     </div>
 </section>
 
-<!-- About Team & Main Content Editable Areas -->
-<editable-area area-identifier="about-area"></editable-area>
-<editable-area area-identifier="about-hosts-area"></editable-area>
-<editable-area area-identifier="about-main-area"></editable-area>
+<!-- Team Section (from Content Hub) -->
+@if (teamMembers != null && teamMembers.Any())
+{
+    <section class="topics-section section-padding bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 col-12 text-center mb-5">
+                    <h3 class="section-title">Meet Our Team</h3>
+                    <p class="text-muted">The dedicated professionals and PGA instructors at Tiya Golf Club</p>
+                </div>
+
+                @foreach (var member in teamMembers)
+                {
+                    <div class="col-lg-4 col-md-6 col-12 mb-4">
+                        <div class="custom-block custom-block-full">
+                            <div class="custom-block-image-wrap">
+                                <img src="@member.ImageUrl" class="custom-block-image img-fluid" alt="@member.Name" />
+                            </div>
+
+                            <div class="custom-block-info">
+                                <h5 class="mb-2">@member.Name</h5>
+                                <p class="badge bg-primary mb-2">@member.Role</p>
+                                <p class="mb-0">@member.Biography</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Page Builder Main Area for Custom Widgets -->
 <editable-area area-identifier="main-area"></editable-area>

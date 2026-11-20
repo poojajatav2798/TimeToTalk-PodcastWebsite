@@ -4,6 +4,33 @@
 
 @{
     ViewData["Title"] = "Contact Us";
+
+    var contactPage = ViewBag.ContactPage as TimeToTalk.ContactPage;
+    var settings = ViewBag.Settings as TimeToTalk.TiyaWebsiteSettings;
+
+    var headerTitle = !string.IsNullOrWhiteSpace(contactPage?.HeaderTitle) 
+        ? contactPage.HeaderTitle 
+        : (!string.IsNullOrWhiteSpace(contactPage?.Title) ? contactPage.Title : "Contact Us");
+
+    var infoHeading = !string.IsNullOrWhiteSpace(contactPage?.InfoHeading) 
+        ? contactPage.InfoHeading 
+        : "Send Us a Message";
+
+    var phone = !string.IsNullOrWhiteSpace(contactPage?.Phone) 
+        ? contactPage.Phone 
+        : (settings?.ContactPhone ?? "(020) 010-020-0340");
+
+    var email = !string.IsNullOrWhiteSpace(contactPage?.Email) 
+        ? contactPage.Email 
+        : (settings?.ContactEmail ?? "info@tiyagolf.com");
+
+    var location = !string.IsNullOrWhiteSpace(contactPage?.Location) 
+        ? contactPage.Location 
+        : (settings?.FooterAddress ?? "123 Fairway Drive, London, UK");
+
+    var mapUrl = !string.IsNullOrWhiteSpace(contactPage?.GoogleMapsEmbedUrl) 
+        ? contactPage.GoogleMapsEmbedUrl 
+        : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d158857.7281066703!2d-0.24168153701090248!3d51.5287718408761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47d8a00baf21de75%3A0x52963a5addd52a99!2sLondon%2C%20UK!5e0!3m2!1sen!2s!4v1680000000000!5m2!1sen!2s";
 }
 
 <!-- Kentico Page Builder Editable Area for Editors -->
@@ -15,21 +42,23 @@
 }
 
 <!-- PAGE HEADER -->
-<header class="site-header d-flex align-items-center">
+<header class="site-header d-flex flex-column justify-content-center align-items-center">
     <div class="container">
-        <h2>Contact</h2>
-        <p class="text-white">Get in touch with the Pod Talk team</p>
+        <div class="row">
+            <div class="col-lg-12 col-12 text-center">
+                <h2 class="mb-0 text-white">@headerTitle</h2>
+            </div>
+        </div>
     </div>
 </header>
 
-<section class="section-padding">
+<!-- CONTACT FORM & INFO SECTION -->
+<section class="section-padding" id="contact-form">
     <div class="container">
         <div class="row">
-
-            <!-- CONTACT FORM -->
-            <div class="col-lg-8 col-12 mx-auto">
+            <div class="col-lg-7 col-12 mb-4 mb-lg-0">
                 <div class="section-title-wrap mb-4">
-                    <h4 class="section-title">Send us a message</h4>
+                    <h4 class="section-title">@infoHeading</h4>
                 </div>
 
                 @if (TempData["SuccessMessage"] != null)
@@ -58,8 +87,8 @@
 
                         <div class="col-lg-12 col-12">
                             <div class="form-floating mb-3">
-                                <input type="text" name="company" id="company" class="form-control" placeholder="Company">
-                                <label for="company">Company (Optional)</label>
+                                <input type="text" name="company" id="company" class="form-control" placeholder="Subject">
+                                <label for="company">Subject (Optional)</label>
                             </div>
 
                             <div class="form-floating mb-3">
@@ -69,12 +98,36 @@
                         </div>
 
                         <div class="col-lg-4 col-12 ms-auto">
-                            <button type="submit" class="form-control btn custom-btn">Submit</button>
+                            <button type="submit" class="form-control btn custom-btn">Submit Message</button>
                         </div>
                     </div>
                 </form>
             </div>
 
+            <div class="col-lg-5 col-12">
+                <div class="contact-info mt-lg-0 mt-4 p-4 rounded-4 shadow-sm bg-light">
+                    <h5 class="mb-3">Contact Details</h5>
+                    <p class="mb-2">
+                        <i class="bi-geo-alt-fill text-primary me-2"></i>
+                        <strong>Address:</strong> @location
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi-telephone-fill text-primary me-2"></i>
+                        <strong>Phone:</strong> <a href="tel:@phone" class="contact-link">@phone</a>
+                    </p>
+                    <p class="mb-4">
+                        <i class="bi-envelope-fill text-primary me-2"></i>
+                        <strong>Email:</strong> <a href="mailto:@email" class="contact-link">@email</a>
+                    </p>
+
+                    @if (!string.IsNullOrWhiteSpace(mapUrl))
+                    {
+                        <div class="ratio ratio-16x9 rounded-3 overflow-hidden shadow-sm">
+                            <iframe src="@mapUrl" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </section>

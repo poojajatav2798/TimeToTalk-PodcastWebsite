@@ -11,23 +11,21 @@ namespace Podcast.Web.Controllers
 {
     public class AboutController : Controller
     {
-        private readonly IHostRepository _hostRepo;
+        private readonly ITiyaContentRepository _contentRepo;
 
-        public AboutController(IHostRepository hostRepo)
+        public AboutController(ITiyaContentRepository contentRepo)
         {
-            _hostRepo = hostRepo;
+            _contentRepo = contentRepo;
         }
 
         public async Task<IActionResult> Index()
         {
-            var hostEntities = await _hostRepo.GetAllHostsAsync();
-            var hosts = hostEntities?.Select(h => h.ToViewModel()).ToList() ?? new List<HostViewModel>();
-            if (!hosts.Any())
-            {
-                hosts = SampleData.GetHosts();
-            }
+            var aboutPage = await _contentRepo.GetAboutPageContentAsync();
+            var teamMembers = await _contentRepo.GetTeamMembersAsync();
 
-            ViewBag.Hosts = hosts;
+            ViewBag.AboutPage = aboutPage;
+            ViewBag.TeamMembers = teamMembers;
+
             return View();
         }
     }
